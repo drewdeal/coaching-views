@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Checkout loops and graphs: a CD operating model</title>
+<style>
+:root {
+  --bg: #f4f1ea;
+  --paper: #fffcf6;
+  --ink: #1c1b18;
+  --muted: #5a564c;
+  --faint: #8a8578;
+  --line: #d8d2c4;
+  --line-strong: #b9b2a2;
+  --human: #1d4e89;
+  --human-bg: #e7eef7;
+  --copilot: #b35a16;
+  --copilot-bg: #f8eee4;
+  --pipeline: #1b6a49;
+  --pipeline-bg: #e5f3eb;
+  --accent: #1d4e89;
+  --shadow: 0 1px 2px rgba(28,27,24,.06), 0 8px 24px rgba(28,27,24,.06);
+  --font: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --mono: "SFMono-Regular", "Cascadia Mono", Consolas, "Liberation Mono", Menlo, monospace;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 16px/1.55 var(--font);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 28px 80px; }
+.topbar {
+  position: sticky; top: 0; z-index: 20;
+  background: rgba(244,241,234,.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+}
+.topbar-inner {
+  max-width: 1120px; margin: 0 auto; padding: 10px 28px;
+  display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center;
+}
+.brand { font-weight: 650; letter-spacing: -.01em; margin-right: auto; }
+.seg, .toolbar {
+  display: inline-flex; background: var(--paper); border: 1px solid var(--line);
+  border-radius: 999px; padding: 3px; gap: 2px;
+}
+.seg button, .toolbar button, .btn {
+  font: inherit; font-size: 13px; font-weight: 600;
+  border: 0; background: transparent; color: var(--muted);
+  padding: 6px 12px; border-radius: 999px; cursor: pointer;
+}
+.seg button[aria-pressed="true"], .toolbar button[aria-pressed="true"] {
+  background: var(--ink); color: #fff;
+}
+.btn { background: var(--paper); border: 1px solid var(--line); color: var(--ink); }
+.btn:hover, .seg button:hover, .toolbar button:hover { color: var(--ink); }
+header.hero { padding: 36px 0 12px; }
+header.hero h1 {
+  font-size: clamp(28px, 4vw, 40px);
+  line-height: 1.15; letter-spacing: -.03em;
+  font-weight: 700; margin: 0 0 12px;
+}
+.lede { font-size: 1.12rem; color: var(--muted); max-width: 46em; margin: 0 0 10px; }
+.credit { color: var(--faint); font-size: .92rem; margin: 0; }
+.note {
+  background: #efe8d6; border: 1px solid #e0d5b8; color: #3f3a2e;
+  border-radius: 10px; padding: 12px 14px; margin: 18px 0 0; font-size: .95rem;
+}
+nav.toc { margin: 28px 0; padding: 16px 18px; background: var(--paper);
+  border: 1px solid var(--line); border-radius: 14px; }
+nav.toc strong { display: block; margin-bottom: 8px; }
+nav.toc ol { margin: 0; padding-left: 1.2em; columns: 2; gap: 24px; }
+nav.toc a { text-decoration: none; }
+nav.toc a:hover { text-decoration: underline; }
+section.doc-sec { margin: 40px 0; }
+section.doc-sec > h2 {
+  font-size: 1.45rem; letter-spacing: -.02em; margin: 0 0 8px;
+  padding-bottom: 8px; border-bottom: 1px solid var(--line);
+}
+.caption { color: var(--muted); font-size: .92rem; margin: 0 0 16px; }
+.quote {
+  margin: 0 0 20px; padding: 16px 20px 16px 22px;
+  border-left: 4px solid var(--accent); background: var(--paper);
+  border-radius: 0 12px 12px 0;
+}
+.quote p { margin: 0 0 6px; font-size: 1.2rem; line-height: 1.4; letter-spacing: -.015em; }
+.quote cite { color: var(--muted); font-style: normal; font-size: .9rem; }
+.callout {
+  background: var(--human-bg); border: 1px solid #c9d6e8; border-radius: 12px;
+  padding: 14px 16px; margin: 16px 0;
+}
+.callout.info { background: #eef4ea; border-color: #c6d6c4; }
+.callout strong { display: block; margin-bottom: 4px; }
+.table-wrap { overflow-x: auto; margin: 14px 0 18px; }
+table { width: 100%; border-collapse: collapse; font-size: .95rem; background: var(--paper); }
+th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+th { font-size: .78rem; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); font-weight: 650; background: #f3efe6; }
+tr.total td { font-weight: 700; border-top: 2px solid var(--ink); }
+.stream-strip { display: flex; flex-wrap: wrap; gap: 10px; }
+.stream-card {
+  flex: 1 1 132px; min-width: 128px; text-align: left;
+  background: var(--paper); border: 1px solid var(--line); border-radius: 12px;
+  padding: 12px; cursor: pointer; font: inherit; color: inherit;
+}
+.stream-card .step-num { display: block; font-size: .72rem; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--faint); font-weight: 650; }
+.stream-card strong { display: block; margin: 4px 0 4px; font-size: .95rem; }
+.stream-card .role { display: block; color: var(--muted); font-size: .8rem; min-height: 2.4em; }
+.stream-card[aria-pressed="true"] {
+  border: 2px solid var(--accent); background: var(--human-bg); padding: 11px;
+}
+.edges { color: var(--muted); font-size: .9rem; margin: 12px 0 0; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; margin: 14px 0; font-size: .88rem; }
+.swatch { display: inline-block; width: 14px; height: 14px; border-radius: 4px; margin-right: 6px; vertical-align: -2px; }
+.zoom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 8px; }
+@media (max-width: 800px) {
+  .zoom-grid, .step-grid, nav.toc ol, .two, .contract-grid { grid-template-columns: 1fr; columns: 1; }
+}
+.panel, .card {
+  background: var(--paper); border: 1px solid var(--line); border-radius: 14px;
+  padding: 16px 18px; box-shadow: var(--shadow);
+}
+.panel h4, .panel h3, .card h3 { margin: 0 0 8px; font-size: 1.05rem; }
+.panel-future { border-color: #c9d6e8; }
+.props { margin: 10px 0 0; }
+.props > div { display: grid; grid-template-columns: 9.5em 1fr; gap: 6px 12px;
+  padding: 8px 0; border-top: 1px solid var(--line); }
+.props dt { color: var(--muted); font-size: .82rem; font-weight: 650; }
+.props dd { margin: 0; }
+.blank {
+  display: inline-block; min-width: 5.2em; padding: 0 6px 1px;
+  border-bottom: 1.5px solid var(--ink); color: var(--faint);
+  font-style: italic; font-weight: 500; line-height: 1.2;
+}
+.time-line { margin: 0 0 8px; font-size: .92rem; }
+.gate { list-style: none; margin: 8px 0 0; padding: 0; font-family: var(--mono); font-size: .82rem; }
+.gate li { padding: 6px 0; border-top: 1px dashed var(--line); }
+.gate-label {
+  display: inline-block; font-size: .68rem; font-weight: 700; letter-spacing: .04em;
+  padding: 2px 6px; border-radius: 4px; margin-right: 6px; font-family: var(--font);
+}
+.gate-green .gate-label { background: var(--pipeline-bg); color: var(--pipeline); }
+.gate-not .gate-label { background: #f3e4e0; color: #8a2f1d; }
+.gate-info .gate-label { background: var(--human-bg); color: var(--human); }
+.pdsa-svg, .graph-svg { width: 100%; height: auto; display: block; }
+.contract-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 16px; }
+.contract-card { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
+.contract-card h3 { margin: 0 0 8px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+pre.sample {
+  background: #1c1b18; color: #f4f1ea; border-radius: 12px; padding: 14px 16px;
+  font: 12.5px/1.45 var(--mono); overflow-x: auto; white-space: pre-wrap;
+}
+.start-list { margin: 0; padding-left: 1.2em; }
+.start-list li { margin: 0 0 10px; }
+.expanded-only { display: none; }
+body.expanded .interactive-zoom { display: none; }
+body.expanded .expanded-only { display: block; }
+body.expanded .interactive-contracts { display: none; }
+footer.site {
+  margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line);
+  color: var(--muted); font-size: .9rem;
+}
+select { font: inherit; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--paper); }
+.step-block { margin: 22px 0 36px; }
+.step-head { margin-bottom: 10px; }
+.step-head .kicker { margin: 0; font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); font-weight: 700; }
+.step-head h3 { margin: 2px 0 0; font-size: 1.25rem; }
+.step-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.step-block h5 { margin: 14px 0 0; font-size: .9rem; }
+
+/* Slide views for image capture */
+.slides { display: none; }
+body.slide-view { background: var(--bg); margin: 0; }
+body.slide-view .doc, body.slide-view .topbar { display: none !important; }
+body.slide-view .slides { display: block; }
+.slide {
+  display: none; width: 1600px; background: var(--bg); color: var(--ink);
+  padding: 48px 56px 40px; font-family: var(--font);
+}
+body.slide-view.view-stream .slide-stream,
+body.slide-view.view-pdsa .slide-pdsa,
+body.slide-view.view-contracts .slide-contracts,
+body.slide-view.view-roles .slide-roles,
+body.slide-view.view-team .slide-team { display: block; }
+.slide h1 { font-size: 52px; line-height: 1.1; letter-spacing: -.03em; margin: 0 0 8px; }
+.slide .sub { font-size: 24px; color: var(--muted); margin: 0 0 28px; }
+.s-row-label {
+  font-size: 22px; font-weight: 700; margin: 10px 0 12px; letter-spacing: -.01em;
+}
+.s-strip { display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; }
+.s-card {
+  background: var(--paper); border: 1px solid var(--line-strong); border-radius: 14px;
+  padding: 16px 14px 14px; min-height: 210px;
+}
+.s-card .s-num { display: block; font-size: 15px; letter-spacing: .08em; text-transform: uppercase; color: var(--faint); font-weight: 700; }
+.s-card strong { display: block; font-size: 22px; line-height: 1.2; margin: 8px 0 10px; letter-spacing: -.02em; }
+.s-card .s-role { display: block; font-size: 16px; color: var(--muted); min-height: 3.1em; }
+.s-card .s-time { display: block; margin-top: 10px; font-size: 18px; }
+.s-card .blank { font-size: 18px; min-width: 4.2em; }
+.slide-stream .s-card.future { border-color: #9ab0d0; background: #f7f9fc; }
+.s-edge { font-size: 20px; color: var(--muted); margin: 14px 0 18px; }
+.slide .foot {
+  margin-top: 20px; font-size: 18px; color: var(--faint);
+  display: flex; justify-content: space-between; gap: 16px;
+}
+.slide-pdsa .pdsa-layout { display: grid; grid-template-columns: 1.15fr .85fr; gap: 28px; align-items: start; }
+.slide-pdsa h2 { font-size: 28px; margin: 0 0 8px; }
+.slide-pdsa .panel { padding: 22px 24px; }
+.slide-pdsa .panel p, .slide-pdsa .props dd { font-size: 20px; line-height: 1.4; }
+.slide-pdsa .props dt { font-size: 16px; }
+.slide-pdsa .props > div { grid-template-columns: 7.5em 1fr; }
+.slide-pdsa .gate { font-size: 18px; font-family: var(--font); }
+.slide-pdsa .gate-label { font-size: 13px; }
+.slide-pdsa .current-compare { margin-top: 16px; font-size: 20px; color: var(--muted); }
+.slide-contracts .graph-wrap { background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: 8px; }
+.s-clist { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 22px; margin-top: 18px; }
+.s-citem { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; }
+.s-citem strong { display: block; font-size: 20px; margin-bottom: 2px; }
+.s-citem span { font-size: 18px; color: var(--muted); }
+.slide .table-wrap table { font-size: 20px; }
+.slide th { font-size: 15px; padding: 10px 12px; }
+.slide td { padding: 9px 12px; }
+.slide-roles .callout { font-size: 24px; line-height: 1.35; padding: 18px 20px; margin: 0 0 20px; }
+.slide-roles .lanes-note { font-size: 20px; margin: 8px 0 0; }
+.slide-team .split { display: grid; grid-template-columns: 1.05fr .95fr; gap: 22px; }
+.slide-team .callout { font-size: 20px; line-height: 1.4; }
+.slide h2 { font-size: 26px; margin: 0 0 10px; }
+
+
+@page { size: Letter; margin: 0.5in; }
+@media print {
+  body { background: #fff; }
+  .topbar, .toc, .no-print { display: none !important; }
+  .wrap { max-width: none; padding: 0; }
+  .interactive-zoom { display: none !important; }
+  .expanded-only { display: block !important; }
+  .interactive-contracts { display: none !important; }
+  .slides { display: none !important; }
+  header.hero { padding: 0 0 8px; }
+  header.hero h1 { font-size: 22pt; }
+  .lede { font-size: 10.5pt; }
+  section.doc-sec { margin: 16px 0 20px; }
+  section.doc-sec > h2 { font-size: 14pt; margin-bottom: 6px; padding-bottom: 4px; }
+  .step-grid, .two, .contract-grid, .zoom-grid { grid-template-columns: 1fr !important; }
+  .pdsa-svg { max-height: 220px; }
+  .graph-svg { max-height: 300px; }
+  .step-block { break-before: auto; break-inside: auto; margin: 12px 0 16px; }
+  .step-head, h2, h3, h4, h5 { break-after: avoid; break-inside: avoid; }
+  .panel, .card { break-inside: auto; box-shadow: none; }
+  .contract-card { break-inside: avoid; }
+  .callout, .quote, .note { break-inside: avoid; }
+  table { break-inside: auto; }
+  thead { display: table-header-group; }
+  tr { break-inside: avoid; }
+  a[href]::after { content: none !important; }
+}
+
+</style>
+</head>
+<body data-mode="future">
+  <div class="topbar no-print">
+    <div class="topbar-inner">
+      <div class="brand">Checkout CD model</div>
+      <div class="seg" role="group" aria-label="Value stream state">
+        <button type="button" class="mode-btn" data-mode="current" aria-pressed="false">Current state</button>
+        <button type="button" class="mode-btn" data-mode="future" aria-pressed="true">CD future state</button>
+      </div>
+      <div class="toolbar" role="group" aria-label="Document view">
+        <button type="button" class="expand-btn" aria-pressed="false">Show all loops</button>
+        <button type="button" class="btn" id="print-btn">Print or save PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="doc wrap">
+    <header class="hero">
+      <h1>Checkout loops and graphs: a CD operating model</h1>
+      <p class="lede">A future-state operating model for a 50-person functional team that handles checkout for multiple products in the enterprise. Loops are PDSA iterations that build quality in. The graph is the set of contracts with channel stakeholders, so every party who needs a clear outcome has a clear outcome.</p>
+      <p class="credit">After Hanako (@hanakoxbt), <em>Loops and Graphs</em>.</p>
+      <p class="note"><strong>Times are left blank on purpose.</strong> Fill in wait and cycle times from the team’s own value stream map. Figures in earlier drafts were illustrative only, not measurements.</p>
+    </header>
+
+    <nav class="toc no-print" aria-label="Contents">
+      <strong>Contents</strong>
+      <ol>
+        <li><a href="#article">The article in one page</a></li>
+        <li><a href="#stream">Value stream and PDSA loops</a></li>
+        <li><a href="#graph">Contract graph</a></li>
+        <li><a href="#lanes">Lanes by blast radius</a></li>
+        <li><a href="#roles">Who does what</a></li>
+        <li><a href="#returns">Return paths</a></li>
+        <li><a href="#team">Team shape</a></li>
+        <li><a href="#measures">Measures</a></li>
+        <li><a href="#start">Where to start</a></li>
+        <li><a href="#source">Source</a></li>
+      </ol>
+    </nav>
+
+    <section class="doc-sec" id="article">
+      <h2>The article in one page</h2>
+      <blockquote class="quote">
+        <p>“A loop makes a unit of work correct without you. A graph decides which units exist at all.”</p>
+        <cite>Hanako (@hanakoxbt)</cite>
+      </blockquote>
+      <div class="table-wrap "><table><thead><tr><th>Article idea</th><th>In this checkout model</th></tr></thead><tbody><tr><td>Loop: produce, check, correct, repeat until green</td><td>A PDSA cycle inside every value stream step. Study is a check a program can fail.</td></tr><tr><td>Write the check first</td><td>Human-written, locked acceptance tests (ATDD) before any code.</td></tr><tr><td>Graph: nodes and real dependencies</td><td>Contracts between the checkout team and each channel stakeholder; each edge has a promise, acceptance criteria and a signal.</td></tr><tr><td>Splitter, worker, code node, gate</td><td>Intake and slice, Copilot coding agent, deterministic pipeline, human merge approval.</td></tr><tr><td>Correction edge and learning edge</td><td>Return one failed unit to Build; send derived constraints back to Intake and Copilot instructions.</td></tr><tr><td>Gate on blast radius, not confidence</td><td>Three lanes; payment capture, ledger and card-data changes never open to agents.</td></tr><tr><td>Approve only the last step</td><td>One accountable human approves the merge and the flag ramp, not each intermediate step.</td></tr></tbody></table></div>
+      <div class="callout"><strong>The one human step</strong> Put the human at the point of highest consequence and lowest reversibility: approving the merge and choosing which changes ship. A human in the middle of the graph becomes its slowest node.</div>
+    </section>
+
+    <section class="doc-sec" id="stream">
+      <h2>Value stream: zoom into any step’s loop</h2>
+      <p class="caption">Each step ends at a locked acceptance-test gate in the future state. Click a step to zoom, or use “Show all loops” (and Print) to see every PDSA cycle and gate. Times: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></p>
+      <div class="interactive-zoom">
+        <div class="stream-strip"><button type="button" class="stream-card" data-step="0"><span class="step-num">Step 1</span><strong>Intake and slice</strong><span class="role">Splitter</span><span class="time-line">Time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></span></button><button type="button" class="stream-card" data-step="1"><span class="step-num">Step 2</span><strong>Acceptance test first</strong><span class="role">The check that can fail</span><span class="time-line">Time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></span></button><button type="button" class="stream-card" data-step="2"><span class="step-num">Step 3</span><strong>Build</strong><span class="role">Worker with a loop inside</span><span class="time-line">Time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></span></button><button type="button" class="stream-card" data-step="3"><span class="step-num">Step 4</span><strong>Verify</strong><span class="role">Code nodes</span><span class="time-line">Time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></span></button><button type="button" class="stream-card" data-step="4"><span class="step-num">Step 5</span><strong>Review and merge</strong><span class="role">Gate: the human approves the last step</span><span class="time-line">Time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></span></button><button type="button" class="stream-card" data-step="5"><span class="step-num">Step 6</span><strong>Release</strong><span class="role">Lanes by blast radius</span><span class="time-line">Time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></span></button><button type="button" class="stream-card" data-step="6"><span class="step-num">Step 7</span><strong>Operate and learn</strong><span class="role">Learning edge</span><span class="time-line">Time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></span></button></div>
+        <p class="edges" id="stream-edges">Correction edge (short): Verify or Review returns one unit to Build · Learning edge (long): Operate and learn sends a constraint back to Intake</p>
+        <p class="legend" id="legend"><span><i class="swatch" style="background:var(--human)"></i>Human</span><span><i class="swatch" style="background:var(--copilot)"></i>Copilot</span><span><i class="swatch" style="background:var(--pipeline)"></i>Pipeline</span></p>
+        <div class="zoom-grid">
+          <div class="panel">
+            <h3 id="zoom-title">PDSA loop inside step 3: Build</h3>
+            <div id="zoom-pdsa"></div>
+          </div>
+          <div class="panel panel-future">
+            <h3 id="zoom-side-title">CD future state</h3>
+            <div id="zoom-side"></div>
+          </div>
+        </div>
+      </div>
+      <div class="expanded-only" id="all-loops">
+        <p class="legend"><span><i class="swatch" style="background:var(--human)"></i>Human</span><span><i class="swatch" style="background:var(--copilot)"></i>Copilot</span><span><i class="swatch" style="background:var(--pipeline)"></i>Pipeline</span> <span style="color:var(--faint)">In current state the loop is a slow, late-study cycle, shown in gray.</span></p>
+        
+<article class="step-block" id="step-1">
+  <header class="step-head">
+    <p class="kicker">Step 1 · Splitter</p>
+    <h3>Intake and slice</h3>
+  </header>
+  <div class="step-grid">
+    <div class="panel">
+      <h4>Current state</h4>
+      <p class="time-line">Wait / cycle time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></p>
+      <p>Product lines send large projects into quarterly intake. Work is cut by component (front end, back end, QA), so slices wait on each other.</p>
+      <div class="pdsa-mount" data-step="0" data-mode="current"></div>
+    </div>
+    <div class="panel panel-future">
+      <h4>CD future state</h4>
+      <p class="time-line">Target cycle time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></p>
+      <p>Product owner and squad cut work by outcome and blast radius into thin vertical slices: one issue, one bounded job, one input, one output. Only real dependencies become edges.</p>
+      <div class="pdsa-mount" data-step="0" data-mode="future"></div>
+      <dl class="props">
+<div><dt>Copilot</dt><dd>Agent mode or Copilot Chat drafts a slice proposal and flags arrows with no shared data (no variable crosses, so no edge).</dd></div>
+<div><dt>Human</dt><dd>Product owner approves the slice plan and assigns each slice a contract and a lane.</dd></div>
+<div><dt>Lane</dt><dd>Sets the lane for each slice</dd></div>
+</dl>
+      <h5>Gate</h5>
+      <ul class="gate"><li class="gate-green"><span class="gate-label">GREEN</span> every issue names its contract, lane and acceptance example</li><li class="gate-green"><span class="gate-label">GREEN</span> no slice is larger than one day</li><li class="gate-green"><span class="gate-label">GREEN</span> every dependency names the data that crosses</li></ul>
+    </div>
+  </div>
+</article>
+
+<article class="step-block" id="step-2">
+  <header class="step-head">
+    <p class="kicker">Step 2 · The check that can fail</p>
+    <h3>Acceptance test first</h3>
+  </header>
+  <div class="step-grid">
+    <div class="panel">
+      <h4>Current state</h4>
+      <p class="time-line">Wait / cycle time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></p>
+      <p>QA writes test cases after code is done. Acceptance is a manual regression pass near release, so the check arrives late and is easy to argue with.</p>
+      <div class="pdsa-mount" data-step="1" data-mode="current"></div>
+    </div>
+    <div class="panel panel-future">
+      <h4>CD future state</h4>
+      <p class="time-line">Target cycle time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></p>
+      <p>A human trio (developer, product owner, stakeholder voice) writes the executable acceptance test before any code, Farley style, in the language of the contract. It is locked: the agent can run it, never edit it.</p>
+      <div class="pdsa-mount" data-step="1" data-mode="future"></div>
+      <dl class="props">
+<div><dt>Copilot</dt><dd>May suggest extra edge cases in chat. It never commits to the `acceptance/` folder.</dd></div>
+<div><dt>Human</dt><dd>Writes and commits the acceptance test. CODEOWNERS on `acceptance/` plus a ruleset requiring code-owner review keep it human-owned.</dd></div>
+<div><dt>Lane</dt><dd>Human only, every lane</dd></div>
+</dl>
+      <h5>Gate</h5>
+      <ul class="gate"><li class="gate-green"><span class="gate-label">GREEN</span> the new acceptance test exists and fails before any code</li><li class="gate-green"><span class="gate-label">GREEN</span> test lives under acceptance/ and is code-owner protected</li><li class="gate-not"><span class="gate-label">NOT A CHECK</span> &quot;the story is clear&quot;</li></ul>
+    </div>
+  </div>
+</article>
+
+<article class="step-block" id="step-3">
+  <header class="step-head">
+    <p class="kicker">Step 3 · Worker with a loop inside</p>
+    <h3>Build</h3>
+  </header>
+  <div class="step-grid">
+    <div class="panel">
+      <h4>Current state</h4>
+      <p class="time-line">Wait / cycle time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></p>
+      <p>Long-lived feature branches per project. Merges are big and risky, so people batch them, which makes them bigger.</p>
+      <div class="pdsa-mount" data-step="2" data-mode="current"></div>
+    </div>
+    <div class="panel panel-future">
+      <h4>CD future state</h4>
+      <p class="time-line">Target cycle time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></p>
+      <p>The issue is assigned to Copilot coding agent. It works in its own environment, opens a draft pull request on a short-lived branch off trunk, and loops produce, check, correct until green. New behavior ships behind a feature flag.</p>
+      <div class="pdsa-mount" data-step="2" data-mode="future"></div>
+      <dl class="props">
+<div><dt>Copilot</dt><dd>Coding agent writes code and unit tests and runs the locked acceptance test. Developers use agent mode in the IDE for slices that need pairing.</dd></div>
+<div><dt>Human</dt><dd>None inside the loop. After three failed corrections the slice goes back to a human: the problem is in the plan, not the code.</dd></div>
+<div><dt>Lane</dt><dd>Lanes 1 and 2 only; lane 3 is human-authored</dd></div>
+</dl>
+      <h5>Gate</h5>
+      <ul class="gate"><li class="gate-green"><span class="gate-label">GREEN</span> acceptance suite exits 0</li><li class="gate-green"><span class="gate-label">GREEN</span> the diff touches only files listed in the plan</li><li class="gate-green"><span class="gate-label">GREEN</span> no file under acceptance/ changed</li></ul>
+    </div>
+  </div>
+</article>
+
+<article class="step-block" id="step-4">
+  <header class="step-head">
+    <p class="kicker">Step 4 · Code nodes</p>
+    <h3>Verify</h3>
+  </header>
+  <div class="step-grid">
+    <div class="panel">
+      <h4>Current state</h4>
+      <p class="time-line">Wait / cycle time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></p>
+      <p>A nightly build into a shared QA environment, then a manual regression cycle. Failures come back as a batch days later.</p>
+      <div class="pdsa-mount" data-step="3" data-mode="current"></div>
+    </div>
+    <div class="panel panel-future">
+      <h4>CD future state</h4>
+      <p class="time-line">Target cycle time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></p>
+      <p>Every push runs deterministic checks with no model in them: build, unit, consumer-driven contract tests per stakeholder, mutation testing on changed code, CodeQL, dependency and secret scanning, card-data scope check.</p>
+      <div class="pdsa-mount" data-step="3" data-mode="future"></div>
+      <dl class="props">
+<div><dt>Copilot</dt><dd>Receives the returned unit with verdict, reason, evidence and scope, and fixes only that unit.</dd></div>
+<div><dt>Human</dt><dd>Platform group owns and improves the pipeline itself.</dd></div>
+<div><dt>Lane</dt><dd>Same checks for all lanes</dd></div>
+</dl>
+      <h5>Gate</h5>
+      <ul class="gate"><li class="gate-green"><span class="gate-label">GREEN</span> every stakeholder contract test passes</li><li class="gate-green"><span class="gate-label">GREEN</span> mutation score on changed code at or above team baseline</li><li class="gate-green"><span class="gate-label">GREEN</span> no new high security finding, no secrets</li><li class="gate-not"><span class="gate-label">NOT A CHECK</span> &quot;no errors were raised&quot;</li></ul>
+    </div>
+  </div>
+</article>
+
+<article class="step-block" id="step-5">
+  <header class="step-head">
+    <p class="kicker">Step 5 · Gate: the human approves the last step</p>
+    <h3>Review and merge</h3>
+  </header>
+  <div class="step-grid">
+    <div class="panel">
+      <h4>Current state</h4>
+      <p class="time-line">Wait / cycle time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></p>
+      <p>Two reviewers read every line, then a weekly change board. Humans sit in the middle of the graph and set its speed.</p>
+      <div class="pdsa-mount" data-step="4" data-mode="current"></div>
+    </div>
+    <div class="panel panel-future">
+      <h4>CD future state</h4>
+      <p class="time-line">Target cycle time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></p>
+      <p>Copilot code review comments first and the agent resolves them. Then one accountable human approves the merge to trunk, reading evidence in order: deterministic results, the agent&#x27;s session trajectory, rollback history of this area, and the model&#x27;s own assessment last.</p>
+      <div class="pdsa-mount" data-step="4" data-mode="future"></div>
+      <dl class="props">
+<div><dt>Copilot</dt><dd>Code review leaves comments; coding agent answers them with new commits.</dd></div>
+<div><dt>Human</dt><dd>One approver merges to trunk. Set the ruleset so the person who assigned the agent is not the only approver.</dd></div>
+<div><dt>Lane</dt><dd>Lane 1: approve merge. Lane 2: approve merge and ramp plan</dd></div>
+</dl>
+      <h5>Gate</h5>
+      <ul class="gate"><li class="gate-green"><span class="gate-label">GREEN</span> all required checks pass</li><li class="gate-green"><span class="gate-label">GREEN</span> code-owner approval recorded</li><li class="gate-green"><span class="gate-label">GREEN</span> agent session log attached to the pull request</li></ul>
+    </div>
+  </div>
+</article>
+
+<article class="step-block" id="step-6">
+  <header class="step-head">
+    <p class="kicker">Step 6 · Lanes by blast radius</p>
+    <h3>Release</h3>
+  </header>
+  <div class="step-grid">
+    <div class="panel">
+      <h4>Current state</h4>
+      <p class="time-line">Wait / cycle time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></p>
+      <p>Monthly release windows, manual deploy steps, all-or-nothing rollouts across every product line at once.</p>
+      <div class="pdsa-mount" data-step="5" data-mode="current"></div>
+    </div>
+    <div class="panel panel-future">
+      <h4>CD future state</h4>
+      <p class="time-line">Target cycle time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></p>
+      <p>Every merge deploys to production dark, behind a flag. Rollout ramps by product line (1, 10, 50, 100 percent) with automatic rollback when an SLO or contract signal breaks.</p>
+      <div class="pdsa-mount" data-step="5" data-mode="future"></div>
+      <dl class="props">
+<div><dt>Copilot</dt><dd>None in lane 3. In lanes 1 and 2, the agent can open the flag-ramp change as a pull request.</dd></div>
+<div><dt>Human</dt><dd>Lane 1 ramps automatically. Lane 2 needs an accountable flag ramp approval. Lane 3 never opens to agents.</dd></div>
+<div><dt>Lane</dt><dd>All three lanes apply here</dd></div>
+</dl>
+      <h5>Gate</h5>
+      <ul class="gate"><li class="gate-green"><span class="gate-label">GREEN</span> payment auth rate and error rate inside SLO for this cohort</li><li class="gate-green"><span class="gate-label">GREEN</span> no contract signal breached</li><li class="gate-green"><span class="gate-label">GREEN</span> rollback tested for this flag</li></ul>
+    </div>
+  </div>
+</article>
+
+<article class="step-block" id="step-7">
+  <header class="step-head">
+    <p class="kicker">Step 7 · Learning edge</p>
+    <h3>Operate and learn</h3>
+  </header>
+  <div class="step-grid">
+    <div class="panel">
+      <h4>Current state</h4>
+      <p class="time-line">Wait / cycle time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></p>
+      <p>Incidents are reviewed in a quarterly retro. Learnings go to a wiki page. Next quarter starts from the same place with the same blind spots.</p>
+      <div class="pdsa-mount" data-step="6" data-mode="current"></div>
+    </div>
+    <div class="panel panel-future">
+      <h4>CD future state</h4>
+      <p class="time-line">Target cycle time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></p>
+      <p>Each accepted result or incident yields a derived constraint. It lands in the slicing brief, in `.github/copilot-instructions.md`, and as a new locked acceptance test, so the next run starts where this one ended.</p>
+      <div class="pdsa-mount" data-step="6" data-mode="future"></div>
+      <dl class="props">
+<div><dt>Copilot</dt><dd>Drafts the derived constraint and the instruction-file change as a pull request.</dd></div>
+<div><dt>Human</dt><dd>Squad accepts the constraint; stakeholders confirm their contract signal.</dd></div>
+<div><dt>Lane</dt><dd>Constraint changes follow lane 1</dd></div>
+</dl>
+      <h5>Gate</h5>
+      <ul class="gate"><li class="gate-info"><span class="gate-label">ACCEPTED</span> promo slice for product line B green on first pass</li><li class="gate-info"><span class="gate-label">DERIVED</span> price rounding happens only in the pricing service</li><li class="gate-info"><span class="gate-label">LANDS IN</span> slicing brief, copilot-instructions, acceptance/pricing</li></ul>
+    </div>
+  </div>
+</article>
+
+      </div>
+    </section>
+
+    <section class="doc-sec" id="graph">
+      <h2>Contract graph with channel stakeholders</h2>
+      <p class="caption">Every party who needs a clear outcome has a contract: a promise, acceptance criteria, a signal that it was met, and a pipeline check that proves it.</p>
+      <div class="interactive-contracts no-print">
+        <p class="no-print"><label for="contract-select">Stakeholder: </label>
+          <select id="contract-select"><option value="0">Product lines</option><option value="1" selected>Payments</option><option value="2">Fraud and risk</option><option value="3">Tax</option><option value="4">Legal and compliance</option><option value="5">Finance</option><option value="6">Customer support</option><option value="7">Platform and SRE</option><option value="8">Security</option><option value="9">UX and marketing</option></select>
+        </p>
+        <div id="contract-graph"></div>
+        
+<article class="contract-card" data-contract="0" hidden>
+  <h3>Product lines</h3>
+  <dl class="props">
+<div><dt>Edge</dt><dd>Checkout to each product line</dd></div>
+<div><dt>Promise</dt><dd>Any product can be sold through one checkout without bespoke code.</dd></div>
+<div><dt>Acceptance criteria</dt><dd>Product is onboarded by configuration and its Given, When, Then suite passes with no checkout code change.</dd></div>
+<div><dt>Signal it was met</dt><dd>Conversion and abandonment per product line; onboarding lead time.</dd></div>
+<div><dt>Pipeline check</dt><dd>Product-line acceptance suites</dd></div>
+<div><dt>Lane</dt><dd>1 and 2</dd></div>
+</dl>
+</article>
+
+<article class="contract-card" data-contract="1">
+  <h3>Payments</h3>
+  <dl class="props">
+<div><dt>Edge</dt><dd>Checkout and payment processor, both ways</dd></div>
+<div><dt>Promise</dt><dd>Authorize and capture exactly once per order.</dd></div>
+<div><dt>Acceptance criteria</dt><dd>Contract tests for authorize, capture, void and refund; idempotency key on every call.</dd></div>
+<div><dt>Signal it was met</dt><dd>Authorization rate; duplicate charges at zero; settlement match.</dd></div>
+<div><dt>Pipeline check</dt><dd>Consumer-driven contract tests</dd></div>
+<div><dt>Lane</dt><dd>3 for capture and refund logic</dd></div>
+</dl>
+</article>
+
+<article class="contract-card" data-contract="2" hidden>
+  <h3>Fraud and risk</h3>
+  <dl class="props">
+<div><dt>Edge</dt><dd>Checkout to fraud and risk</dd></div>
+<div><dt>Promise</dt><dd>Every order is risk-scored before capture.</dd></div>
+<div><dt>Acceptance criteria</dt><dd>Score call returns inside its latency budget; decline and hold paths covered by acceptance tests.</dd></div>
+<div><dt>Signal it was met</dt><dd>Fraud loss rate paired with false-decline rate.</dd></div>
+<div><dt>Pipeline check</dt><dd>Contract and latency tests</dd></div>
+<div><dt>Lane</dt><dd>2</dd></div>
+</dl>
+</article>
+
+<article class="contract-card" data-contract="3" hidden>
+  <h3>Tax</h3>
+  <dl class="props">
+<div><dt>Edge</dt><dd>Checkout to tax</dd></div>
+<div><dt>Promise</dt><dd>Correct tax on every line in every jurisdiction.</dd></div>
+<div><dt>Acceptance criteria</dt><dd>Tax engine contract tests pass across jurisdiction fixtures.</dd></div>
+<div><dt>Signal it was met</dt><dd>Tax variance found in reconciliation.</dd></div>
+<div><dt>Pipeline check</dt><dd>Jurisdiction fixture suite</dd></div>
+<div><dt>Lane</dt><dd>2</dd></div>
+</dl>
+</article>
+
+<article class="contract-card" data-contract="4" hidden>
+  <h3>Legal and compliance</h3>
+  <dl class="props">
+<div><dt>Edge</dt><dd>Checkout to legal and compliance</dd></div>
+<div><dt>Promise</dt><dd>Card-data scope stays minimal; consent and terms captured.</dd></div>
+<div><dt>Acceptance criteria</dt><dd>No raw card data in checkout services (tokenized only); consent recorded per order.</dd></div>
+<div><dt>Signal it was met</dt><dd>Scope scan results; audit findings.</dd></div>
+<div><dt>Pipeline check</dt><dd>Card-data scope scan</dd></div>
+<div><dt>Lane</dt><dd>3</dd></div>
+</dl>
+</article>
+
+<article class="contract-card" data-contract="5" hidden>
+  <h3>Finance</h3>
+  <dl class="props">
+<div><dt>Edge</dt><dd>Checkout to finance</dd></div>
+<div><dt>Promise</dt><dd>Every order reconciles to the ledger.</dd></div>
+<div><dt>Acceptance criteria</dt><dd>Order events carry ledger fields; daily reconciliation job passes.</dd></div>
+<div><dt>Signal it was met</dt><dd>Unreconciled orders per day.</dd></div>
+<div><dt>Pipeline check</dt><dd>Event schema contract</dd></div>
+<div><dt>Lane</dt><dd>3 for ledger schema</dd></div>
+</dl>
+</article>
+
+<article class="contract-card" data-contract="6" hidden>
+  <h3>Customer support</h3>
+  <dl class="props">
+<div><dt>Edge</dt><dd>Checkout to customer support</dd></div>
+<div><dt>Promise</dt><dd>Support can see and fix any order&#x27;s checkout state.</dd></div>
+<div><dt>Acceptance criteria</dt><dd>Order timeline and refund tooling covered by acceptance tests.</dd></div>
+<div><dt>Signal it was met</dt><dd>Checkout-related contact rate and handle time.</dd></div>
+<div><dt>Pipeline check</dt><dd>Support tooling acceptance suite</dd></div>
+<div><dt>Lane</dt><dd>1</dd></div>
+</dl>
+</article>
+
+<article class="contract-card" data-contract="7" hidden>
+  <h3>Platform and SRE</h3>
+  <dl class="props">
+<div><dt>Edge</dt><dd>Both ways</dd></div>
+<div><dt>Promise</dt><dd>Platform gives a paved pipeline; checkout keeps its SLOs.</dd></div>
+<div><dt>Acceptance criteria</dt><dd>Availability and latency SLOs defined; error budget policy agreed; runbooks current.</dd></div>
+<div><dt>Signal it was met</dt><dd>SLO attainment and error budget burn.</dd></div>
+<div><dt>Pipeline check</dt><dd>SLO checks in rollout</dd></div>
+<div><dt>Lane</dt><dd>2</dd></div>
+</dl>
+</article>
+
+<article class="contract-card" data-contract="8" hidden>
+  <h3>Security</h3>
+  <dl class="props">
+<div><dt>Edge</dt><dd>Checkout to security</dd></div>
+<div><dt>Promise</dt><dd>No new high vulnerability or secret reaches trunk.</dd></div>
+<div><dt>Acceptance criteria</dt><dd>CodeQL, dependency and secret scanning are required checks.</dd></div>
+<div><dt>Signal it was met</dt><dd>Age of open high findings.</dd></div>
+<div><dt>Pipeline check</dt><dd>Required security checks</dd></div>
+<div><dt>Lane</dt><dd>2</dd></div>
+</dl>
+</article>
+
+<article class="contract-card" data-contract="9" hidden>
+  <h3>UX and marketing</h3>
+  <dl class="props">
+<div><dt>Edge</dt><dd>Checkout to UX and marketing</dd></div>
+<div><dt>Promise</dt><dd>Promotions and copy ship safely and measurably.</dd></div>
+<div><dt>Acceptance criteria</dt><dd>Changes behind flags with experiment hooks; accessibility checks pass.</dd></div>
+<div><dt>Signal it was met</dt><dd>Experiment results; accessibility violations.</dd></div>
+<div><dt>Pipeline check</dt><dd>Accessibility and flag checks</dd></div>
+<div><dt>Lane</dt><dd>1</dd></div>
+</dl>
+</article>
+
+      </div>
+      <div class="expanded-only">
+        <div id="contract-graph-print"></div>
+        <div class="contract-grid">
+<article class="contract-card" data-contract="0">
+  <h3>Product lines</h3>
+  <dl class="props">
+<div><dt>Edge</dt><dd>Checkout to each product line</dd></div>
+<div><dt>Promise</dt><dd>Any product can be sold through one checkout without bespoke code.</dd></div>
+<div><dt>Acceptance criteria</dt><dd>Product is onboarded by configuration and its Given, When, Then suite passes with no checkout code change.</dd></div>
+<div><dt>Signal it was met</dt><dd>Conversion and abandonment per product line; onboarding lead time.</dd></div>
+<div><dt>Pipeline check</dt><dd>Product-line acceptance suites</dd></div>
+<div><dt>Lane</dt><dd>1 and 2</dd></div>
+</dl>
+</article>
+
+<article class="contract-card" data-contract="1">
+  <h3>Payments</h3>
+  <dl class="props">
+<div><dt>Edge</dt><dd>Checkout and payment processor, both ways</dd></div>
+<div><dt>Promise</dt><dd>Authorize and capture exactly once per order.</dd></div>
+<div><dt>Acceptance criteria</dt><dd>Contract tests for authorize, capture, void and refund; idempotency key on every call.</dd></div>
+<div><dt>Signal it was met</dt><dd>Authorization rate; duplicate charges at zero; settlement match.</dd></div>
+<div><dt>Pipeline check</dt><dd>Consumer-driven contract tests</dd></div>
+<div><dt>Lane</dt><dd>3 for capture and refund logic</dd></div>
+</dl>
+</article>
+
+<article class="contract-card" data-contract="2">
+  <h3>Fraud and risk</h3>
+  <dl class="props">
+<div><dt>Edge</dt><dd>Checkout to fraud and risk</dd></div>
+<div><dt>Promise</dt><dd>Every order is risk-scored before capture.</dd></div>
+<div><dt>Acceptance criteria</dt><dd>Score call returns inside its latency budget; decline and hold paths covered by acceptance tests.</dd></div>
+<div><dt>Signal it was met</dt><dd>Fraud loss rate paired with false-decline rate.</dd></div>
+<div><dt>Pipeline check</dt><dd>Contract and latency tests</dd></div>
+<div><dt>Lane</dt><dd>2</dd></div>
+</dl>
+</article>
+
+<article class="contract-card" data-contract="3">
+  <h3>Tax</h3>
+  <dl class="props">
+<div><dt>Edge</dt><dd>Checkout to tax</dd></div>
+<div><dt>Promise</dt><dd>Correct tax on every line in every jurisdiction.</dd></div>
+<div><dt>Acceptance criteria</dt><dd>Tax engine contract tests pass across jurisdiction fixtures.</dd></div>
+<div><dt>Signal it was met</dt><dd>Tax variance found in reconciliation.</dd></div>
+<div><dt>Pipeline check</dt><dd>Jurisdiction fixture suite</dd></div>
+<div><dt>Lane</dt><dd>2</dd></div>
+</dl>
+</article>
+
+<article class="contract-card" data-contract="4">
+  <h3>Legal and compliance</h3>
+  <dl class="props">
+<div><dt>Edge</dt><dd>Checkout to legal and compliance</dd></div>
+<div><dt>Promise</dt><dd>Card-data scope stays minimal; consent and terms captured.</dd></div>
+<div><dt>Acceptance criteria</dt><dd>No raw card data in checkout services (tokenized only); consent recorded per order.</dd></div>
+<div><dt>Signal it was met</dt><dd>Scope scan results; audit findings.</dd></div>
+<div><dt>Pipeline check</dt><dd>Card-data scope scan</dd></div>
+<div><dt>Lane</dt><dd>3</dd></div>
+</dl>
+</article>
+
+<article class="contract-card" data-contract="5">
+  <h3>Finance</h3>
+  <dl class="props">
+<div><dt>Edge</dt><dd>Checkout to finance</dd></div>
+<div><dt>Promise</dt><dd>Every order reconciles to the ledger.</dd></div>
+<div><dt>Acceptance criteria</dt><dd>Order events carry ledger fields; daily reconciliation job passes.</dd></div>
+<div><dt>Signal it was met</dt><dd>Unreconciled orders per day.</dd></div>
+<div><dt>Pipeline check</dt><dd>Event schema contract</dd></div>
+<div><dt>Lane</dt><dd>3 for ledger schema</dd></div>
+</dl>
+</article>
+
+<article class="contract-card" data-contract="6">
+  <h3>Customer support</h3>
+  <dl class="props">
+<div><dt>Edge</dt><dd>Checkout to customer support</dd></div>
+<div><dt>Promise</dt><dd>Support can see and fix any order&#x27;s checkout state.</dd></div>
+<div><dt>Acceptance criteria</dt><dd>Order timeline and refund tooling covered by acceptance tests.</dd></div>
+<div><dt>Signal it was met</dt><dd>Checkout-related contact rate and handle time.</dd></div>
+<div><dt>Pipeline check</dt><dd>Support tooling acceptance suite</dd></div>
+<div><dt>Lane</dt><dd>1</dd></div>
+</dl>
+</article>
+
+<article class="contract-card" data-contract="7">
+  <h3>Platform and SRE</h3>
+  <dl class="props">
+<div><dt>Edge</dt><dd>Both ways</dd></div>
+<div><dt>Promise</dt><dd>Platform gives a paved pipeline; checkout keeps its SLOs.</dd></div>
+<div><dt>Acceptance criteria</dt><dd>Availability and latency SLOs defined; error budget policy agreed; runbooks current.</dd></div>
+<div><dt>Signal it was met</dt><dd>SLO attainment and error budget burn.</dd></div>
+<div><dt>Pipeline check</dt><dd>SLO checks in rollout</dd></div>
+<div><dt>Lane</dt><dd>2</dd></div>
+</dl>
+</article>
+
+<article class="contract-card" data-contract="8">
+  <h3>Security</h3>
+  <dl class="props">
+<div><dt>Edge</dt><dd>Checkout to security</dd></div>
+<div><dt>Promise</dt><dd>No new high vulnerability or secret reaches trunk.</dd></div>
+<div><dt>Acceptance criteria</dt><dd>CodeQL, dependency and secret scanning are required checks.</dd></div>
+<div><dt>Signal it was met</dt><dd>Age of open high findings.</dd></div>
+<div><dt>Pipeline check</dt><dd>Required security checks</dd></div>
+<div><dt>Lane</dt><dd>2</dd></div>
+</dl>
+</article>
+
+<article class="contract-card" data-contract="9">
+  <h3>UX and marketing</h3>
+  <dl class="props">
+<div><dt>Edge</dt><dd>Checkout to UX and marketing</dd></div>
+<div><dt>Promise</dt><dd>Promotions and copy ship safely and measurably.</dd></div>
+<div><dt>Acceptance criteria</dt><dd>Changes behind flags with experiment hooks; accessibility checks pass.</dd></div>
+<div><dt>Signal it was met</dt><dd>Experiment results; accessibility violations.</dd></div>
+<div><dt>Pipeline check</dt><dd>Accessibility and flag checks</dd></div>
+<div><dt>Lane</dt><dd>1</dd></div>
+</dl>
+</article>
+</div>
+      </div>
+      <div class="table-wrap "><table><thead><tr><th>Stakeholder</th><th>Promise</th><th>Signal it was met</th><th>Lane</th></tr></thead><tbody><tr><td>Product lines</td><td>Any product can be sold through one checkout without bespoke code.</td><td>Conversion and abandonment per product line; onboarding lead time.</td><td>1 and 2</td></tr><tr><td>Payments</td><td>Authorize and capture exactly once per order.</td><td>Authorization rate; duplicate charges at zero; settlement match.</td><td>3 for capture and refund logic</td></tr><tr><td>Fraud and risk</td><td>Every order is risk-scored before capture.</td><td>Fraud loss rate paired with false-decline rate.</td><td>2</td></tr><tr><td>Tax</td><td>Correct tax on every line in every jurisdiction.</td><td>Tax variance found in reconciliation.</td><td>2</td></tr><tr><td>Legal and compliance</td><td>Card-data scope stays minimal; consent and terms captured.</td><td>Scope scan results; audit findings.</td><td>3</td></tr><tr><td>Finance</td><td>Every order reconciles to the ledger.</td><td>Unreconciled orders per day.</td><td>3 for ledger schema</td></tr><tr><td>Customer support</td><td>Support can see and fix any order&#x27;s checkout state.</td><td>Checkout-related contact rate and handle time.</td><td>1</td></tr><tr><td>Platform and SRE</td><td>Platform gives a paved pipeline; checkout keeps its SLOs.</td><td>SLO attainment and error budget burn.</td><td>2</td></tr><tr><td>Security</td><td>No new high vulnerability or secret reaches trunk.</td><td>Age of open high findings.</td><td>2</td></tr><tr><td>UX and marketing</td><td>Promotions and copy ship safely and measurably.</td><td>Experiment results; accessibility violations.</td><td>1</td></tr></tbody></table></div>
+    </section>
+
+    <section class="doc-sec" id="lanes">
+      <h2>Lanes by blast radius</h2>
+      <div class="table-wrap "><table><thead><tr><th>Lane</th><th>Checkout examples</th><th>Gate</th><th>Agent autonomy</th></tr></thead><tbody><tr><td>1. Reversible and contained</td><td>Copy, UI behind a flag, a support view, a new test</td><td>Deterministic checks, one human merge approval</td><td>Coding agent builds end to end</td></tr><tr><td>2. Reversible but wide</td><td>Shared pricing library, API schema addition, fraud call timeout</td><td>Checks plus trajectory review, staged ramp, accountable ramp approval</td><td>Coding agent builds; human approves merge and ramp</td></tr><tr><td>3. Hard to reverse</td><td>Payment capture and refund logic, ledger schema, data migrations, card-data scope</td><td>Closed to agents. Human-authored change, human decision before execution</td><td>Suggestions in agent mode only</td></tr></tbody></table></div>
+      <p>Lane 3 is not a high threshold. It is a lane that does not open, because thresholds get adjusted and closed lanes do not. Payment capture, refunds, the ledger, and card data stay off-limits to agents.</p>
+    </section>
+
+    <section class="doc-sec" id="roles">
+      <h2>Who does what in the future state</h2>
+      <div class="table-wrap "><table><thead><tr><th>Step</th><th>Copilot coding agent</th><th>Copilot code review</th><th>Agent mode (IDE)</th><th>Human</th></tr></thead><tbody><tr><td>Intake and slice</td><td>—</td><td>—</td><td>Drafts slices, flags false edges</td><td>Approves slice plan, sets lane</td></tr><tr><td>Acceptance test first</td><td>Cannot edit acceptance/</td><td>—</td><td>Suggests edge cases</td><td>Writes and locks the test</td></tr><tr><td>Build</td><td>Builds the slice, opens draft PR, loops to green</td><td>—</td><td>Pairing on hard slices</td><td>Takes back slices after 3 failures</td></tr><tr><td>Verify</td><td>Fixes the returned unit only</td><td>—</td><td>—</td><td>Platform group owns pipeline</td></tr><tr><td>Review and merge</td><td>Answers review comments</td><td>Reviews every PR first</td><td>—</td><td>Approves the merge (last step)</td></tr><tr><td>Release</td><td>Opens flag-ramp PR (lanes 1 and 2)</td><td>—</td><td>—</td><td>Approves lane 2 ramp; runs lane 3</td></tr><tr><td>Operate and learn</td><td>Drafts constraint and instruction PR</td><td>—</td><td>—</td><td>Accepts the constraint</td></tr></tbody></table></div>
+    </section>
+
+    <section class="doc-sec" id="returns">
+      <h2>Return paths</h2>
+      <div class="two">
+        <div class="card">
+          <h3>Correction edge: return the unit, not the batch</h3>
+          <pre class="sample">UNIT      promo-code slice, product line B
+VERDICT   red
+REASON    acceptance/promo_stacking failed
+EVIDENCE  expected total 84.00, got 80.00, pricing/discounts.ts:112
+SCOPE     fix this file only, do not touch other slices
+ATTEMPT   2 of 3</pre>
+          <p>Four good slices stay merged. After three failed attempts the slice goes back to a human, because the plan is wrong.</p>
+        </div>
+        <div class="card">
+          <h3>Learning edge: a constraint, not the output</h3>
+          <pre class="sample">ACCEPTED   tax slice for new jurisdiction, green first pass
+DERIVED    tax is computed only by the tax service, never in UI
+LANDS IN   slicing brief
+           .github/copilot-instructions.md
+           acceptance/tax (new locked test)</pre>
+          <p>The tell of a missing learning edge: a team that is fast and never gets smarter.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="doc-sec" id="team">
+      <h2>Team shape (suggestion)</h2>
+      <p class="caption">A suggested split for about 50 people, not a prescription.</p>
+      <div class="table-wrap "><table><thead><tr><th>Group</th><th>Type</th><th>People</th><th>Owns</th></tr></thead><tbody><tr><td>Cart, pricing and promotions</td><td>Stream-aligned</td><td>8</td><td>Cart, price, promo contracts with product lines and marketing</td></tr><tr><td>Payments and wallets</td><td>Stream-aligned</td><td>8</td><td>Payments contract; owner of most lane 3 work</td></tr><tr><td>Risk, tax and compliance</td><td>Stream-aligned</td><td>7</td><td>Fraud, tax, legal and finance contracts</td></tr><tr><td>Order confirmation and post-purchase</td><td>Stream-aligned</td><td>7</td><td>Confirmation, receipts, support tooling contract</td></tr><tr><td>Product onboarding</td><td>Stream-aligned</td><td>7</td><td>Bringing new product lines onto checkout by configuration</td></tr><tr><td>Checkout platform and pipeline</td><td>Platform</td><td>8</td><td>Pipeline, flags, observability, Copilot setup and rulesets</td></tr><tr><td>Product, UX and ATDD coaching</td><td>Enabling</td><td>5</td><td>Slicing, acceptance-test practice, contract facilitation</td></tr><tr class="total"><td>Total</td><td></td><td>50</td><td></td></tr></tbody></table></div>
+    </section>
+
+    <section class="doc-sec" id="measures">
+      <h2>Measures with Goodhart guardrails</h2>
+      <div class="table-wrap "><table><thead><tr><th>Step</th><th>Team-level measure</th><th>Paired with</th></tr></thead><tbody><tr><td>Intake and slice</td><td>Median slice size in days</td><td>Rework after merge</td></tr><tr><td>Acceptance test first</td><td>Share of slices with a failing test before code</td><td>Acceptance test flakiness</td></tr><tr><td>Build</td><td>Pull request cycle time</td><td>Change failure rate</td></tr><tr><td>Verify</td><td>Pipeline time</td><td>Mutation score on changed code</td></tr><tr><td>Review and merge</td><td>Review wait time</td><td>Escaped defects</td></tr><tr><td>Release</td><td>Deploy frequency</td><td>Time to restore and rollback rate</td></tr><tr><td>Operate and learn</td><td>Incidents that yield a constraint</td><td>Repeat-incident rate</td></tr></tbody></table></div>
+      <div class="callout info"><strong>Use for learning, not targets</strong> Team-level only, no individual rankings, always in pairs, trends over points. Rate each squad’s ATDD discipline on the 0 to 10 Exposure to Mastery scale: low end, tests written after code; middle, the squad writes locked acceptance tests with coaching; top, it writes them unaided before every slice and teaches others.</div>
+    </section>
+
+    <section class="doc-sec" id="start">
+      <h2>Where to start</h2>
+      <ol class="start-list"><li><strong>Pick one repeated flow</strong> For example, onboarding a product line&#x27;s promo rules. Draw the splitter, the lanes, the merge, one gate and one back edge.</li><li><strong>Build the gate first</strong> Locked acceptance tests and required checks. Everything gets easier once something can fail loudly.</li><li><strong>Then the lanes</strong> Label every issue lane 1, 2 or 3. Let Copilot coding agent take lane 1 issues end to end.</li><li><strong>Then the learning edge</strong> Once results are being accepted, turn each into a constraint in the brief and .github/copilot-instructions.md.</li><li><strong>Move the human to the last step</strong> Retire intermediate sign-offs; keep one accountable merge and ramp approval.</li></ol>
+    </section>
+
+    <section class="doc-sec" id="source">
+      <h2>Source</h2>
+      <p>After Hanako (@hanakoxbt), <em>Loops and Graphs</em> (23 Aug 2026). Ideas are paraphrased; the quote is the author’s. The checkout mapping, PDSA framing, contracts and team shape are this model’s application, not the article’s.</p>
+      <p><a href="https://x.com/hanakoxbt/status/2091515787366306154">x.com/hanakoxbt/status/2091515787366306154</a></p>
+    </section>
+
+    <footer class="site">
+      Offline coaching copy. No employer is named. Open this file in any browser; use “Show all loops” or Print for the full expanded view.
+    </footer>
+  </div>
+
+  <div class="slides">
+    <section class="slide slide-stream" id="slide-stream">
+      <h1>Checkout value stream</h1>
+      <p class="sub">Current state versus CD future state · 50-person team, multiple products in the enterprise · Times are blanks to fill in from the team’s own map.</p>
+      <div class="s-row-label">Current state</div><div class="s-strip"><div class="s-card"><span class="s-num">Step 1</span><strong>Intake and slice</strong><span class="s-role">Splitter</span><span class="s-time">Time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></span></div><div class="s-card"><span class="s-num">Step 2</span><strong>Acceptance test first</strong><span class="s-role">The check that can fail</span><span class="s-time">Time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></span></div><div class="s-card"><span class="s-num">Step 3</span><strong>Build</strong><span class="s-role">Worker with a loop inside</span><span class="s-time">Time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></span></div><div class="s-card"><span class="s-num">Step 4</span><strong>Verify</strong><span class="s-role">Code nodes</span><span class="s-time">Time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></span></div><div class="s-card"><span class="s-num">Step 5</span><strong>Review and merge</strong><span class="s-role">Gate: the human approves the last step</span><span class="s-time">Time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></span></div><div class="s-card"><span class="s-num">Step 6</span><strong>Release</strong><span class="s-role">Lanes by blast radius</span><span class="s-time">Time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></span></div><div class="s-card"><span class="s-num">Step 7</span><strong>Operate and learn</strong><span class="s-role">Learning edge</span><span class="s-time">Time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></span></div></div><p class="s-edge">Return path: defects found late go back as a batch to the next release</p>
+      <div class="s-row-label">CD future state</div><div class="s-strip"><div class="s-card future"><span class="s-num">Step 1</span><strong>Intake and slice</strong><span class="s-role">Splitter</span><span class="s-time">Time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></span></div><div class="s-card future"><span class="s-num">Step 2</span><strong>Acceptance test first</strong><span class="s-role">The check that can fail</span><span class="s-time">Time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></span></div><div class="s-card future"><span class="s-num">Step 3</span><strong>Build</strong><span class="s-role">Worker with a loop inside</span><span class="s-time">Time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></span></div><div class="s-card future"><span class="s-num">Step 4</span><strong>Verify</strong><span class="s-role">Code nodes</span><span class="s-time">Time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></span></div><div class="s-card future"><span class="s-num">Step 5</span><strong>Review and merge</strong><span class="s-role">Gate: the human approves the last step</span><span class="s-time">Time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></span></div><div class="s-card future"><span class="s-num">Step 6</span><strong>Release</strong><span class="s-role">Lanes by blast radius</span><span class="s-time">Time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></span></div><div class="s-card future"><span class="s-num">Step 7</span><strong>Operate and learn</strong><span class="s-role">Learning edge</span><span class="s-time">Time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></span></div></div><p class="s-edge"><strong>Correction edge (short):</strong> Verify or Review returns one unit to Build. &nbsp;&nbsp; <strong>Learning edge (long):</strong> Operate and learn sends a constraint back to Intake.</p>
+      <div class="foot"><span>After Hanako (@hanakoxbt), Loops and Graphs</span><span>Checkout CD operating model</span></div>
+    </section>
+
+    <section class="slide slide-pdsa" id="slide-pdsa">
+      <h1>PDSA loop inside Build</h1>
+      <p class="sub">Step 3 of 7 · In the future state the coding agent runs the loop; a person does not sit inside it. Target cycle time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></p>
+      <div class="pdsa-layout">
+        <div class="panel">
+          <h2>CD future state · Repeat until green</h2>
+          <p class="legend" style="font-size:18px"><span><i class="swatch" style="background:var(--human)"></i>Human</span><span><i class="swatch" style="background:var(--copilot)"></i>Copilot</span><span><i class="swatch" style="background:var(--pipeline)"></i>Pipeline</span></p>
+          <div id="slide-pdsa-mount"></div>
+        </div>
+        <div>
+          <div class="panel panel-future">
+            <h2>What happens</h2>
+            <p>The issue is assigned to Copilot coding agent. It works in its own environment, opens a draft pull request on a short-lived branch off trunk, and loops produce, check, correct until green. New behavior ships behind a feature flag.</p>
+            <dl class="props">
+              <div><dt>Copilot</dt><dd>Writes code and unit tests, runs the locked acceptance test. Pair in the IDE on hard slices.</dd></div>
+              <div><dt>Human</dt><dd>None inside the loop. After three failed corrections the slice goes back to a person: the problem is in the plan, not the code.</dd></div>
+              <div><dt>Lane</dt><dd>Lanes 1 and 2 only. Lane 3 is human-authored.</dd></div>
+            </dl>
+            <h2 style="margin-top:16px;font-size:22px">Gate</h2>
+            <ul class="gate"><li class="gate-green"><span class="gate-label">GREEN</span> acceptance suite exits 0</li><li class="gate-green"><span class="gate-label">GREEN</span> the diff touches only files listed in the plan</li><li class="gate-green"><span class="gate-label">GREEN</span> no file under acceptance/ changed</li></ul>
+          </div>
+          <p class="current-compare"><strong>Current state:</strong> weeks of coding on a long-lived branch; study is local tests, if any; act is fixing merge conflicts. Wait / cycle time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></p>
+        </div>
+      </div>
+      <div class="foot"><span>After Hanako (@hanakoxbt), Loops and Graphs</span><span>Checkout CD operating model</span></div>
+    </section>
+
+    <section class="slide slide-contracts" id="slide-contracts">
+      <h1>Contract graph with channel stakeholders</h1>
+      <p class="sub">The checkout team sits in the middle. Each edge is a contract: a promise, how you know it was met, and the pipeline check that proves it.</p>
+      <div class="graph-wrap"><div id="slide-graph"></div></div>
+      <div class="s-clist"><div class="s-citem"><strong>Product lines</strong><span>Any product can be sold through one checkout without bespoke code.</span></div><div class="s-citem"><strong>Payments</strong><span>Authorize and capture exactly once per order.</span></div><div class="s-citem"><strong>Fraud and risk</strong><span>Every order is risk-scored before capture.</span></div><div class="s-citem"><strong>Tax</strong><span>Correct tax on every line in every jurisdiction.</span></div><div class="s-citem"><strong>Legal and compliance</strong><span>Card-data scope stays minimal; consent and terms captured.</span></div><div class="s-citem"><strong>Finance</strong><span>Every order reconciles to the ledger.</span></div><div class="s-citem"><strong>Customer support</strong><span>Support can see and fix any order&#x27;s checkout state.</span></div><div class="s-citem"><strong>Platform and SRE</strong><span>Platform gives a paved pipeline; checkout keeps its SLOs.</span></div><div class="s-citem"><strong>Security</strong><span>No new high vulnerability or secret reaches trunk.</span></div><div class="s-citem"><strong>UX and marketing</strong><span>Promotions and copy ship safely and measurably.</span></div></div>
+      <div class="foot"><span>After Hanako (@hanakoxbt), Loops and Graphs</span><span>Checkout CD operating model</span></div>
+    </section>
+
+    <section class="slide slide-roles" id="slide-roles">
+      <h1>Copilot roles and human approval</h1>
+      <p class="sub">Agents run the loops. A person approves only the last step: the merge, and the flag ramp where blast radius requires it.</p>
+      <div class="callout"><strong>The one human step</strong> Put the human at the point of highest consequence and lowest reversibility. A human in the middle of the graph becomes its slowest node. Set the ruleset so the person who assigned the agent is not the only approver of its pull request.</div>
+      <div class="table-wrap slide-table"><table><thead><tr><th>Step</th><th>Coding agent</th><th>Code review</th><th>Human</th></tr></thead><tbody><tr><td>Intake and slice</td><td>—</td><td>—</td><td>Approves slice plan, sets lane</td></tr><tr><td>Acceptance test first</td><td>Cannot edit acceptance/</td><td>—</td><td>Writes and locks the test</td></tr><tr><td>Build</td><td>Builds the slice, opens draft PR, loops to green</td><td>—</td><td>Takes back slices after 3 failures</td></tr><tr><td>Verify</td><td>Fixes the returned unit only</td><td>—</td><td>Platform group owns pipeline</td></tr><tr><td>Review and merge</td><td>Answers review comments</td><td>Reviews every PR first</td><td>Approves the merge (last step)</td></tr><tr><td>Release</td><td>Opens flag-ramp PR (lanes 1–2)</td><td>—</td><td>Approves lane 2 ramp; runs lane 3</td></tr><tr><td>Operate and learn</td><td>Drafts constraint and instruction PR</td><td>—</td><td>Accepts the constraint</td></tr></tbody></table></div>
+      <div class="table-wrap slide-table"><table><thead><tr><th>Lane</th><th>Examples</th><th>Agent autonomy</th></tr></thead><tbody><tr><td>1 · Reversible and contained</td><td>Copy, UI behind a flag, a support view, a new test</td><td>Coding agent builds end to end</td></tr><tr><td>2 · Reversible but wide</td><td>Shared pricing library, API schema, fraud timeout</td><td>Agent builds; human approves merge and ramp</td></tr><tr><td>3 · Hard to reverse</td><td>Payment capture and refunds, ledger, card-data scope</td><td>Closed to agents. Suggestions only.</td></tr></tbody></table></div>
+      <p class="lanes-note"><strong>Lane 3 stays closed.</strong> Payment capture, refunds, the ledger, and card data never open to agents. Lane 3 is not a high threshold — thresholds get adjusted; closed lanes do not.</p>
+      <div class="foot"><span>After Hanako (@hanakoxbt), Loops and Graphs</span><span>Checkout CD operating model</span></div>
+    </section>
+
+    <section class="slide slide-team" id="slide-team">
+      <h1>Team shape and measures</h1>
+      <p class="sub">A suggested split for about 50 people, not a prescription. Measures are team-level only, always paired, used for learning rather than targets.</p>
+      <div class="split">
+        <div>
+          <h2>Suggested split</h2>
+          <div class="table-wrap slide-table"><table><thead><tr><th>Group</th><th>Type</th><th>People</th><th>Owns</th></tr></thead><tbody><tr><td>Cart, pricing and promotions</td><td>Stream-aligned</td><td>8</td><td>Cart, price, promo contracts with product lines and marketing</td></tr><tr><td>Payments and wallets</td><td>Stream-aligned</td><td>8</td><td>Payments contract; owner of most lane 3 work</td></tr><tr><td>Risk, tax and compliance</td><td>Stream-aligned</td><td>7</td><td>Fraud, tax, legal and finance contracts</td></tr><tr><td>Order confirmation and post-purchase</td><td>Stream-aligned</td><td>7</td><td>Confirmation, receipts, support tooling contract</td></tr><tr><td>Product onboarding</td><td>Stream-aligned</td><td>7</td><td>Bringing new product lines onto checkout by configuration</td></tr><tr><td>Checkout platform and pipeline</td><td>Platform</td><td>8</td><td>Pipeline, flags, observability, Copilot setup and rulesets</td></tr><tr><td>Product, UX and ATDD coaching</td><td>Enabling</td><td>5</td><td>Slicing, acceptance-test practice, contract facilitation</td></tr><tr class="total"><td>Total</td><td></td><td>50</td><td></td></tr></tbody></table></div>
+        </div>
+        <div>
+          <h2>Paired measures</h2>
+          <div class="table-wrap slide-table"><table><thead><tr><th>Step</th><th>Team-level measure</th><th>Paired with</th></tr></thead><tbody><tr><td>Intake and slice</td><td>Median slice size in days</td><td>Rework after merge</td></tr><tr><td>Acceptance test first</td><td>Share of slices with a failing test before code</td><td>Acceptance test flakiness</td></tr><tr><td>Build</td><td>Pull request cycle time</td><td>Change failure rate</td></tr><tr><td>Verify</td><td>Pipeline time</td><td>Mutation score on changed code</td></tr><tr><td>Review and merge</td><td>Review wait time</td><td>Escaped defects</td></tr><tr><td>Release</td><td>Deploy frequency</td><td>Time to restore and rollback rate</td></tr><tr><td>Operate and learn</td><td>Incidents that yield a constraint</td><td>Repeat-incident rate</td></tr></tbody></table></div>
+          <div class="callout info"><strong>Goodhart guardrails</strong> No individual rankings. Trends over points. Rate each squad’s ATDD discipline on the 0–10 Exposure to Mastery scale: tests after code at the low end; locked acceptance tests with coaching in the middle; writing them unaided before every slice, and teaching others, at the top.</div>
+        </div>
+      </div>
+      <div class="foot"><span>After Hanako (@hanakoxbt), Loops and Graphs</span><span>Checkout CD operating model</span></div>
+    </section>
+  </div>
+
+<script>
+window.MODEL_DATA = {"steps": [{"name": "Intake and slice", "role": "Splitter", "cur": {"summary": "Product lines send large projects into quarterly intake. Work is cut by component (front end, back end, QA), so slices wait on each other.", "plan": "Quarterly intake picks projects", "doing": "Split by component and team", "study": "Rarely; dependencies found mid-build", "act": "Re-plan next quarter"}, "fut": {"summary": "Product owner and squad cut work by outcome and blast radius into thin vertical slices: one issue, one bounded job, one input, one output. Only real dependencies become edges.", "copilot": "Agent mode or Copilot Chat drafts a slice proposal and flags arrows with no shared data (no variable crosses, so no edge).", "human": "Product owner approves the slice plan and assigns each slice a contract and a lane.", "lane": "Sets the lane for each slice", "plan": {"text": "Name the outcome and the contract it touches", "actor": "Human"}, "doing": {"text": "Draft slices of a day or less", "actor": "Copilot"}, "study": {"text": "Check every edge: does the next step read this output?", "actor": "Human"}, "act": {"text": "Fold learning-edge constraints into the slicing brief", "actor": "Human"}, "gate": "GREEN    every issue names its contract, lane and acceptance example\nGREEN    no slice is larger than one day\nGREEN    every dependency names the data that crosses"}}, {"name": "Acceptance test first", "role": "The check that can fail", "cur": {"summary": "QA writes test cases after code is done. Acceptance is a manual regression pass near release, so the check arrives late and is easy to argue with.", "plan": "Requirements doc", "doing": "Code first", "study": "Manual test cases after build", "act": "Defects logged for next sprint"}, "fut": {"summary": "A human trio (developer, product owner, stakeholder voice) writes the executable acceptance test before any code, Farley style, in the language of the contract. It is locked: the agent can run it, never edit it.", "copilot": "May suggest extra edge cases in chat. It never commits to the `acceptance/` folder.", "human": "Writes and commits the acceptance test. CODEOWNERS on `acceptance/` plus a ruleset requiring code-owner review keep it human-owned.", "lane": "Human only, every lane", "plan": {"text": "Pick the contract example (Given, When, Then)", "actor": "Human"}, "doing": {"text": "Write the executable test against the contract", "actor": "Human"}, "study": {"text": "Run it and prove it fails red first", "actor": "Pipeline"}, "act": {"text": "Lock it; tune wording with the stakeholder", "actor": "Human"}, "gate": "GREEN    the new acceptance test exists and fails before any code\nGREEN    test lives under acceptance/ and is code-owner protected\nNOT A CHECK   \"the story is clear\""}}, {"name": "Build", "role": "Worker with a loop inside", "cur": {"summary": "Long-lived feature branches per project. Merges are big and risky, so people batch them, which makes them bigger.", "plan": "Developer reads ticket", "doing": "Weeks of coding on a branch", "study": "Local tests, if any", "act": "Fix on merge conflict"}, "fut": {"summary": "The issue is assigned to Copilot coding agent. It works in its own environment, opens a draft pull request on a short-lived branch off trunk, and loops produce, check, correct until green. New behavior ships behind a feature flag.", "copilot": "Coding agent writes code and unit tests and runs the locked acceptance test. Developers use agent mode in the IDE for slices that need pairing.", "human": "None inside the loop. After three failed corrections the slice goes back to a human: the problem is in the plan, not the code.", "lane": "Lanes 1 and 2 only; lane 3 is human-authored", "plan": {"text": "Read issue, locked test and copilot-instructions", "actor": "Copilot"}, "doing": {"text": "Write code and unit tests behind a flag", "actor": "Copilot"}, "study": {"text": "Run unit and acceptance tests", "actor": "Pipeline"}, "act": {"text": "Correct and repeat, cap at 3 attempts", "actor": "Copilot"}, "gate": "GREEN    acceptance suite exits 0\nGREEN    the diff touches only files listed in the plan\nGREEN    no file under acceptance/ changed"}}, {"name": "Verify", "role": "Code nodes", "cur": {"summary": "A nightly build into a shared QA environment, then a manual regression cycle. Failures come back as a batch days later.", "plan": "Regression plan per release", "doing": "Nightly build, shared test env", "study": "Manual regression", "act": "Batch of defects returned"}, "fut": {"summary": "Every push runs deterministic checks with no model in them: build, unit, consumer-driven contract tests per stakeholder, mutation testing on changed code, CodeQL, dependency and secret scanning, card-data scope check.", "copilot": "Receives the returned unit with verdict, reason, evidence and scope, and fixes only that unit.", "human": "Platform group owns and improves the pipeline itself.", "lane": "Same checks for all lanes", "plan": {"text": "Pipeline as code defines the checks", "actor": "Human"}, "doing": {"text": "Build and run every check on each push", "actor": "Pipeline"}, "study": {"text": "Verdict with evidence per unit", "actor": "Pipeline"}, "act": {"text": "Return the unit, not the batch", "actor": "Copilot"}, "gate": "GREEN    every stakeholder contract test passes\nGREEN    mutation score on changed code at or above team baseline\nGREEN    no new high security finding, no secrets\nNOT A CHECK   \"no errors were raised\""}}, {"name": "Review and merge", "role": "Gate: the human approves the last step", "cur": {"summary": "Two reviewers read every line, then a weekly change board. Humans sit in the middle of the graph and set its speed.", "plan": "Request reviewers", "doing": "Line-by-line human review", "study": "Change advisory board", "act": "Rework, re-queue"}, "fut": {"summary": "Copilot code review comments first and the agent resolves them. Then one accountable human approves the merge to trunk, reading evidence in order: deterministic results, the agent's session trajectory, rollback history of this area, and the model's own assessment last.", "copilot": "Code review leaves comments; coding agent answers them with new commits.", "human": "One approver merges to trunk. Set the ruleset so the person who assigned the agent is not the only approver.", "lane": "Lane 1: approve merge. Lane 2: approve merge and ramp plan", "plan": {"text": "Required checks and code owners set by ruleset", "actor": "Human"}, "doing": {"text": "Copilot code review and agent fixes", "actor": "Copilot"}, "study": {"text": "Read evidence in order, confidence last", "actor": "Human"}, "act": {"text": "Approve the merge, or return one unit", "actor": "Human"}, "gate": "GREEN    all required checks pass\nGREEN    code-owner approval recorded\nGREEN    agent session log attached to the pull request"}}, {"name": "Release", "role": "Lanes by blast radius", "cur": {"summary": "Monthly release windows, manual deploy steps, all-or-nothing rollouts across every product line at once.", "plan": "Release calendar", "doing": "Manual deploy in window", "study": "Watch dashboards on release night", "act": "Roll back the whole release"}, "fut": {"summary": "Every merge deploys to production dark, behind a flag. Rollout ramps by product line (1, 10, 50, 100 percent) with automatic rollback when an SLO or contract signal breaks.", "copilot": "None in lane 3. In lanes 1 and 2, the agent can open the flag-ramp change as a pull request.", "human": "Lane 1 ramps automatically. Lane 2 needs an accountable flag ramp approval. Lane 3 never opens to agents.", "lane": "All three lanes apply here", "plan": {"text": "Ramp plan per product line", "actor": "Human"}, "doing": {"text": "Deploy dark, ramp the flag", "actor": "Pipeline"}, "study": {"text": "Watch SLOs and contract signals per cohort", "actor": "Pipeline"}, "act": {"text": "Auto-rollback or continue the ramp", "actor": "Pipeline"}, "gate": "GREEN    payment auth rate and error rate inside SLO for this cohort\nGREEN    no contract signal breached\nGREEN    rollback tested for this flag"}}, {"name": "Operate and learn", "role": "Learning edge", "cur": {"summary": "Incidents are reviewed in a quarterly retro. Learnings go to a wiki page. Next quarter starts from the same place with the same blind spots.", "plan": "Incident ticket", "doing": "Firefight", "study": "Quarterly retro", "act": "Wiki page"}, "fut": {"summary": "Each accepted result or incident yields a derived constraint. It lands in the slicing brief, in `.github/copilot-instructions.md`, and as a new locked acceptance test, so the next run starts where this one ended.", "copilot": "Drafts the derived constraint and the instruction-file change as a pull request.", "human": "Squad accepts the constraint; stakeholders confirm their contract signal.", "lane": "Constraint changes follow lane 1", "plan": {"text": "Pick one signal or incident to learn from", "actor": "Human"}, "doing": {"text": "Draft the derived constraint", "actor": "Copilot"}, "study": {"text": "Did the repeat-defect rate fall?", "actor": "Human"}, "act": {"text": "Constraint lands in brief, instructions and tests", "actor": "Human"}, "gate": "ACCEPTED   promo slice for product line B green on first pass\nDERIVED    price rounding happens only in the pricing service\nLANDS IN   slicing brief, copilot-instructions, acceptance/pricing"}}], "contracts": [{"who": "Product lines", "dir": "Checkout to each product line", "promise": "Any product can be sold through one checkout without bespoke code.", "acceptance": "Product is onboarded by configuration and its Given, When, Then suite passes with no checkout code change.", "signal": "Conversion and abandonment per product line; onboarding lead time.", "lane": "1 and 2", "check": "Product-line acceptance suites"}, {"who": "Payments", "dir": "Checkout and payment processor, both ways", "promise": "Authorize and capture exactly once per order.", "acceptance": "Contract tests for authorize, capture, void and refund; idempotency key on every call.", "signal": "Authorization rate; duplicate charges at zero; settlement match.", "lane": "3 for capture and refund logic", "check": "Consumer-driven contract tests"}, {"who": "Fraud and risk", "dir": "Checkout to fraud and risk", "promise": "Every order is risk-scored before capture.", "acceptance": "Score call returns inside its latency budget; decline and hold paths covered by acceptance tests.", "signal": "Fraud loss rate paired with false-decline rate.", "lane": "2", "check": "Contract and latency tests"}, {"who": "Tax", "dir": "Checkout to tax", "promise": "Correct tax on every line in every jurisdiction.", "acceptance": "Tax engine contract tests pass across jurisdiction fixtures.", "signal": "Tax variance found in reconciliation.", "lane": "2", "check": "Jurisdiction fixture suite"}, {"who": "Legal and compliance", "dir": "Checkout to legal and compliance", "promise": "Card-data scope stays minimal; consent and terms captured.", "acceptance": "No raw card data in checkout services (tokenized only); consent recorded per order.", "signal": "Scope scan results; audit findings.", "lane": "3", "check": "Card-data scope scan"}, {"who": "Finance", "dir": "Checkout to finance", "promise": "Every order reconciles to the ledger.", "acceptance": "Order events carry ledger fields; daily reconciliation job passes.", "signal": "Unreconciled orders per day.", "lane": "3 for ledger schema", "check": "Event schema contract"}, {"who": "Customer support", "dir": "Checkout to customer support", "promise": "Support can see and fix any order's checkout state.", "acceptance": "Order timeline and refund tooling covered by acceptance tests.", "signal": "Checkout-related contact rate and handle time.", "lane": "1", "check": "Support tooling acceptance suite"}, {"who": "Platform and SRE", "dir": "Both ways", "promise": "Platform gives a paved pipeline; checkout keeps its SLOs.", "acceptance": "Availability and latency SLOs defined; error budget policy agreed; runbooks current.", "signal": "SLO attainment and error budget burn.", "lane": "2", "check": "SLO checks in rollout"}, {"who": "Security", "dir": "Checkout to security", "promise": "No new high vulnerability or secret reaches trunk.", "acceptance": "CodeQL, dependency and secret scanning are required checks.", "signal": "Age of open high findings.", "lane": "2", "check": "Required security checks"}, {"who": "UX and marketing", "dir": "Checkout to UX and marketing", "promise": "Promotions and copy ship safely and measurably.", "acceptance": "Changes behind flags with experiment hooks; accessibility checks pass.", "signal": "Experiment results; accessibility violations.", "lane": "1", "check": "Accessibility and flag checks"}]};
+(function () {
+  const DATA = window.MODEL_DATA;
+  const params = new URLSearchParams(location.search);
+  const view = params.get("view") || "interactive";
+
+  const HUMAN = "#1d4e89";
+  const COPILOT = "#b35a16";
+  const PIPELINE = "#1b6a49";
+  const CURRENT = "#8a8578";
+  const INK = "#1c1b18";
+  const MUTED = "#5a564c";
+
+  function color(actor, mode) {
+    if (mode === "current") return CURRENT;
+    if (actor === "Human") return HUMAN;
+    if (actor === "Copilot") return COPILOT;
+    return PIPELINE;
+  }
+
+  function wrap(txt, max) {
+    const words = String(txt).split(" ");
+    const lines = [];
+    let cur = "";
+    words.forEach((w) => {
+      if ((cur + " " + w).trim().length > max) { lines.push(cur.trim()); cur = w; }
+      else cur = (cur + " " + w).trim();
+    });
+    if (cur) lines.push(cur);
+    return lines;
+  }
+
+  function escapeXml(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  function pdsaSvg(step, mode, opts) {
+    opts = opts || {};
+    const W = opts.W || 600, H = opts.H || 340;
+    const cx = opts.cx || 300, cy = opts.cy || 170, r = opts.r || 92;
+    const sw = opts.sw || 14;
+    const fs = opts.fs || 14;
+    const fl = opts.fl || 12;
+    const max = opts.max || 26;
+    const quads = mode === "future"
+      ? [
+          { k: "Plan", q: step.fut.plan },
+          { k: "Do", q: step.fut.doing },
+          { k: "Study", q: step.fut.study },
+          { k: "Act", q: step.fut.act }
+        ]
+      : [
+          { k: "Plan", q: { text: step.cur.plan, actor: "Human" } },
+          { k: "Do", q: { text: step.cur.doing, actor: "Human" } },
+          { k: "Study", q: { text: step.cur.study, actor: "Human" } },
+          { k: "Act", q: { text: step.cur.act, actor: "Human" } }
+        ];
+    function arc(i) {
+      const a0 = (-90 + i * 90 + 4) * Math.PI / 180;
+      const a1 = (-90 + (i + 1) * 90 - 4) * Math.PI / 180;
+      return "M " + (cx + r * Math.cos(a0)) + " " + (cy + r * Math.sin(a0)) +
+        " A " + r + " " + r + " 0 0 1 " + (cx + r * Math.cos(a1)) + " " + (cy + r * Math.sin(a1));
+    }
+    const pos = opts.pos || [
+      { x: 410, y: 58, anchor: "start" },
+      { x: 410, y: 268, anchor: "start" },
+      { x: 190, y: 268, anchor: "end" },
+      { x: 190, y: 58, anchor: "end" }
+    ];
+    let paths = "";
+    quads.forEach((x, i) => {
+      paths += '<path d="' + arc(i) + '" fill="none" stroke="' + color(x.q.actor, mode) +
+        '" stroke-width="' + sw + '" stroke-linecap="round"></path>';
+    });
+    const mid1 = mode === "future" ? "Repeat" : "Slow loop";
+    const mid2 = mode === "future" ? "until green" : "study comes late";
+    let texts = '<text x="' + cx + '" y="' + (cy - 6) + '" text-anchor="middle" fill="' + INK +
+      '" font-size="' + (fs + 2) + '" font-weight="650">' + mid1 + "</text>" +
+      '<text x="' + cx + '" y="' + (cy + 16) + '" text-anchor="middle" fill="' + MUTED +
+      '" font-size="' + fl + '">' + mid2 + "</text>";
+    quads.forEach((x, i) => {
+      const p = pos[i];
+      const label = x.k + (mode === "future" ? " · " + x.q.actor : "");
+      const lines = wrap(x.q.text, max);
+      texts += '<text x="' + p.x + '" y="' + p.y + '" text-anchor="' + p.anchor + '" fill="' + INK +
+        '" font-size="' + fs + '" font-weight="650">' + escapeXml(label) + "</text>";
+      lines.forEach((ln, j) => {
+        texts += '<text x="' + p.x + '" y="' + (p.y + 20 + j * (fl + 6)) + '" text-anchor="' + p.anchor +
+          '" fill="' + MUTED + '" font-size="' + fl + '">' + escapeXml(ln) + "</text>";
+      });
+    });
+    return '<svg class="pdsa-svg" viewBox="0 0 ' + W + " " + H +
+      '" width="100%" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="PDSA loop">' +
+      paths + texts + "</svg>";
+  }
+
+  function contractGraph(sel, opts) {
+    opts = opts || {};
+    const W = opts.W || 1000, H = opts.H || 540;
+    const cx = W / 2, cy = H / 2;
+    const rx = opts.rx || 380, ry = opts.ry || 205;
+    const w = opts.w || 170, h = opts.h || 40;
+    const fs = opts.fs || 13;
+    const n = DATA.contracts.length;
+    const nodes = DATA.contracts.map((c, i) => {
+      const a = (-90 + i * (360 / n)) * Math.PI / 180;
+      return { c: c, x: cx + rx * Math.cos(a), y: cy + ry * Math.sin(a) };
+    });
+    let s = "";
+    nodes.forEach((node, i) => {
+      const on = i === sel;
+      s += '<line x1="' + cx + '" y1="' + cy + '" x2="' + node.x + '" y2="' + node.y +
+        '" stroke="' + (on ? HUMAN : "#c8c1b3") + '" stroke-width="' + (on ? 3 : 1.25) + '"></line>';
+    });
+    const cw = opts.cw || 220, ch = opts.ch || 64;
+    s += '<rect x="' + (cx - cw / 2) + '" y="' + (cy - ch / 2) + '" width="' + cw + '" height="' + ch +
+      '" rx="12" fill="#fffcf6" stroke="#1c1b18" stroke-width="1.5"></rect>';
+    s += '<text x="' + cx + '" y="' + (cy - 4) + '" text-anchor="middle" fill="' + INK +
+      '" font-size="' + (fs + 3) + '" font-weight="650">Checkout team</text>';
+    s += '<text x="' + cx + '" y="' + (cy + 16) + '" text-anchor="middle" fill="' + MUTED +
+      '" font-size="' + fs + '">about 50 people</text>';
+    nodes.forEach((node, i) => {
+      const on = i === sel;
+      s += '<g data-node="' + i + '" style="cursor:pointer">';
+      s += '<rect x="' + (node.x - w / 2) + '" y="' + (node.y - h / 2) + '" width="' + w + '" height="' + h +
+        '" rx="10" fill="' + (on ? "#e7eef7" : "#fffcf6") + '" stroke="' + (on ? HUMAN : "#c8c1b3") +
+        '" stroke-width="' + (on ? 2 : 1) + '"></rect>';
+      s += '<text x="' + node.x + '" y="' + (node.y + 5) + '" text-anchor="middle" fill="' + INK +
+        '" font-size="' + fs + '" font-weight="' + (on ? 650 : 500) + '">' + escapeXml(node.c.who) + "</text>";
+      s += "</g>";
+    });
+    return '<svg class="graph-svg" viewBox="0 0 ' + W + " " + H +
+      '" width="100%" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Contract graph">' +
+      s + "</svg>";
+  }
+
+  const bigOpts = {
+    W: 700, H: 420, cx: 350, cy: 210, r: 118, sw: 22, fs: 18, fl: 16, max: 28,
+    pos: [
+      { x: 490, y: 70, anchor: "start" },
+      { x: 490, y: 330, anchor: "start" },
+      { x: 210, y: 330, anchor: "end" },
+      { x: 210, y: 70, anchor: "end" }
+    ]
+  };
+
+  function mountAllPdsa() {
+    document.querySelectorAll(".pdsa-mount").forEach((el) => {
+      const i = Number(el.getAttribute("data-step"));
+      const mode = el.getAttribute("data-mode");
+      const big = el.getAttribute("data-big") === "1";
+      el.innerHTML = pdsaSvg(DATA.steps[i], mode, big ? bigOpts : {});
+    });
+  }
+
+  function formatGate(text) {
+    const items = String(text).split("\n").map((line) => {
+      line = line.trim();
+      if (!line) return "";
+      let label = line.split(/\s+/)[0];
+      let rest = line.slice(label.length).trim();
+      if (label === "NOT") { label = "NOT A CHECK"; rest = rest.replace(/^A CHECK\s*/, ""); }
+      if (label === "LANDS") { label = "LANDS IN"; rest = rest.replace(/^IN\s*/, ""); }
+      let kind = "green";
+      if (label.indexOf("NOT") === 0) kind = "not";
+      else if (["ACCEPTED", "DERIVED", "LANDS IN"].indexOf(label) >= 0) kind = "info";
+      return '<li class="gate-' + kind + '"><span class="gate-label">' + escapeHtml(label) + "</span> " + escapeHtml(rest) + "</li>";
+    }).join("");
+    return '<h5>Gate</h5><ul class="gate">' + items + "</ul>";
+  }
+
+  let sel = 2;
+  function setMode(mode) {
+    document.body.setAttribute("data-mode", mode);
+    document.querySelectorAll(".mode-btn").forEach((b) => {
+      b.setAttribute("aria-pressed", b.getAttribute("data-mode") === mode ? "true" : "false");
+    });
+    const edges = document.getElementById("stream-edges");
+    if (edges) {
+      edges.innerHTML = mode === "future"
+        ? "<span>Correction edge (short): Verify or Review returns one unit to Build</span> · <span>Learning edge (long): Operate and learn sends a constraint back to Intake</span>"
+        : "Return path: defects found late go back as a batch to the next release";
+    }
+    const legend = document.getElementById("legend");
+    if (legend) legend.hidden = mode !== "future";
+    renderZoom();
+  }
+
+  function renderZoom() {
+    const mode = document.body.getAttribute("data-mode") || "future";
+    const step = DATA.steps[sel];
+    document.querySelectorAll(".stream-card").forEach((b) => {
+      b.setAttribute("aria-pressed", Number(b.getAttribute("data-step")) === sel ? "true" : "false");
+    });
+    const title = document.getElementById("zoom-title");
+    if (title) title.textContent = "PDSA loop inside step " + (sel + 1) + ": " + step.name;
+    const mount = document.getElementById("zoom-pdsa");
+    if (mount) mount.innerHTML = pdsaSvg(step, mode);
+    const side = document.getElementById("zoom-side");
+    if (!side) return;
+    const stitle = document.getElementById("zoom-side-title");
+    if (stitle) stitle.textContent = mode === "future" ? "CD future state" : "Current state";
+    if (mode === "future") {
+      side.innerHTML =
+        '<dl class="props">' +
+        "<div><dt>What happens</dt><dd>" + escapeHtml(step.fut.summary) + "</dd></div>" +
+        "<div><dt>Copilot</dt><dd>" + escapeHtml(step.fut.copilot) + "</dd></div>" +
+        "<div><dt>Human</dt><dd>" + escapeHtml(step.fut.human) + "</dd></div>" +
+        "<div><dt>Lane</dt><dd>" + escapeHtml(step.fut.lane) + "</dd></div>" +
+        '<div><dt>Time</dt><dd><span class="blank">fill in</span></dd></div>' +
+        "</dl>" + formatGate(step.fut.gate);
+    } else {
+      side.innerHTML =
+        '<dl class="props">' +
+        "<div><dt>What happens</dt><dd>" + escapeHtml(step.cur.summary) + "</dd></div>" +
+        '<div><dt>Wait / cycle time</dt><dd><span class="blank">fill in</span></dd></div>' +
+        "<div><dt>Article role</dt><dd>" + escapeHtml(step.role) + "</dd></div>" +
+        "</dl>";
+    }
+  }
+
+  let csel = 1;
+  function renderGraph(host, selected, opts) {
+    if (!host) return;
+    host.innerHTML = contractGraph(selected, opts);
+    host.querySelectorAll("[data-node]").forEach((g) => {
+      g.addEventListener("click", function () {
+        selectContract(Number(g.getAttribute("data-node")));
+      });
+    });
+  }
+
+  function selectContract(i) {
+    csel = i;
+    const selEl = document.getElementById("contract-select");
+    if (selEl) selEl.value = String(i);
+    renderGraph(document.getElementById("contract-graph"), csel);
+    document.querySelectorAll(".interactive-contracts .contract-card").forEach((card) => {
+      card.hidden = Number(card.getAttribute("data-contract")) !== i;
+    });
+  }
+
+  function setExpanded(on) {
+    document.body.classList.toggle("expanded", on);
+    document.querySelectorAll(".expand-btn").forEach((b) => {
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+  }
+
+  if (view === "print") {
+    document.body.classList.add("expanded");
+    document.documentElement.classList.add("print-ready");
+  } else if (["stream", "pdsa", "contracts", "roles", "team"].indexOf(view) >= 0) {
+    document.body.classList.add("slide-view", "view-" + view);
+  }
+
+  mountAllPdsa();
+  if (view === "interactive" || view === "print") {
+    setMode("future");
+    document.querySelectorAll(".mode-btn").forEach((b) => {
+      b.addEventListener("click", function () { setMode(b.getAttribute("data-mode")); });
+    });
+    document.querySelectorAll(".stream-card").forEach((b) => {
+      b.addEventListener("click", function () {
+        sel = Number(b.getAttribute("data-step"));
+        renderZoom();
+      });
+    });
+    document.querySelectorAll(".expand-btn").forEach((b) => {
+      b.addEventListener("click", function () {
+        setExpanded(!document.body.classList.contains("expanded"));
+      });
+    });
+    const printBtn = document.getElementById("print-btn");
+    if (printBtn) printBtn.addEventListener("click", function () { window.print(); });
+    const cselEl = document.getElementById("contract-select");
+    if (cselEl) cselEl.addEventListener("change", function (e) { selectContract(Number(e.target.value)); });
+    renderGraph(document.getElementById("contract-graph"), csel);
+    renderGraph(document.getElementById("contract-graph-print"), -1, { W: 1000, H: 540 });
+  }
+  if (view === "contracts") {
+    renderGraph(document.getElementById("slide-graph"), -1, {
+      W: 1480, H: 620, rx: 560, ry: 230, w: 230, h: 52, fs: 18, cw: 280, ch: 80
+    });
+  }
+  if (view === "pdsa") {
+    const el = document.getElementById("slide-pdsa-mount");
+    if (el) el.innerHTML = pdsaSvg(DATA.steps[2], "future", bigOpts);
+  }
+})();
+
+</script>
+</body>
+</html>
