@@ -1,19 +1,9 @@
 # Coaching views
 
-Public HTML pages for coaching models. Open them in a browser; no sign-in is required.
-
-## Checkout CD operating model
-
-A future-state continuous delivery model for a 50-person checkout team: PDSA loops that build quality in, contracts with channel stakeholders, and GitHub Copilot roles with a person approving only the last step.
+This repository is retired. The checkout CD operating model has moved to [drewdeal/coaching-materials](https://github.com/drewdeal/coaching-materials) in the `checkout-cd-model/` directory.
 
 Open the page here:
 
-https://raw.githack.com/drewdeal/coaching-views/main/checkout-cd-model/index.html
+https://drewdeal.github.io/coaching-materials/checkout-cd-model/
 
-You can also download [`checkout-cd-model/index.html`](./checkout-cd-model/index.html) and open it in any browser.
-
-If GitHub Pages is later turned on in this repository’s settings (Source: GitHub Actions, or Deploy from branch `main` / root), the same page will be at https://drewdeal.github.io/coaching-views/checkout-cd-model/.
-
-Step times are left blank for a team to fill in from its own value stream map.
-
-After Hanako (@hanakoxbt), *Loops and Graphs*.
+If that link is not live yet, GitHub Pages still needs to be turned on in the coaching-materials repository (Settings → Pages → Source: GitHub Actions).
