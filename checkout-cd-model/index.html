@@ -263,6 +263,53 @@ body.slide-view.view-team .slide-team { display: block; }
   a[href]::after { content: none !important; }
 }
 
+/* VSM timing, comparison graphs */
+:root { --kelly: #4CBB17; --kelly-dark: #2f7d0c; --kelly-tint: #e6f6dc; --cur-blue: #1d4e89; --cur-tint: #e1ebf7; --wait-red: #8b1a1a; }
+.vsm-block { margin: 28px 0 8px; padding-top: 6px; }
+.vsm-h { font-size: 1.2rem; margin: 0 0 6px; letter-spacing: -.01em; }
+.vsm-tools { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; margin: 12px 0 8px; }
+.vsm-unit { font-size: .9rem; color: var(--muted); display: inline-flex; gap: 8px; align-items: center; }
+.vsm-hint { margin: 4px 0 10px; font-size: .9rem; color: var(--muted); }
+.vsm-msg-edit { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: .88rem; color: var(--muted); margin: 0 0 12px; }
+.vsm-msg-edit input { flex: 1 1 340px; font: inherit; font-size: .9rem; padding: 5px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); color: var(--ink); }
+.vsm-editor { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 0 0 22px; }
+.vsm-card { background: var(--paper); border: 1px solid var(--line); border-top: 4px solid var(--cur-blue); border-radius: 12px; padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 6px; }
+.vsm-editor.fut .vsm-card { border-top-color: var(--kelly); }
+.vsm-card .vn { font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); font-weight: 700; }
+.vsm-card strong { font-size: .93rem; line-height: 1.25; min-height: 2.5em; }
+.vsm-card label { display: grid; grid-template-columns: 2.2em 1fr; align-items: center; gap: 6px; font-size: .82rem; font-weight: 650; color: var(--muted); }
+.vsm-card input[type=number] { width: 100%; min-width: 0; font: inherit; font-size: .95rem; padding: 4px 6px; border: 1px solid var(--line-strong); border-radius: 8px; background: #fff; color: var(--ink); }
+.vsm-card input:disabled { background: #eee9dc; color: var(--faint); }
+.vsm-card .vwarn { font-size: .76rem; color: #8a2f1d; margin: 0; min-height: 1em; }
+.vsm-excl-btn { font: inherit; font-size: .8rem; font-weight: 650; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--paper); color: var(--ink); cursor: pointer; }
+.vsm-excl-btn[aria-pressed="true"] { background: #7a2a1d; color: #fff; border-color: #7a2a1d; }
+.vsm-card.excluded { border-style: dashed; border-top-style: solid; background: #f3eee2; }
+.vsm-card .vexmsg { font-size: .8rem; color: #7a2a1d; margin: 0; line-height: 1.3; }
+.vsm-map { margin: 8px 0 18px; padding: 14px 16px 12px; background: var(--paper); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); }
+.vsm-map h4 { margin: 0 0 8px; font-size: 1.05rem; }
+.vsm-map-cur { border-left: 6px solid var(--cur-blue); }
+.vsm-map-fut { border-left: 6px solid var(--kelly); }
+.vsm-scroll { overflow-x: auto; }
+.vsm-scroll svg { min-width: 880px; width: 100%; height: auto; display: block; }
+.vsm-empty { color: var(--faint); font-style: italic; margin: 6px 0 10px; }
+.vsm-excl-note { margin: 8px 0 0; font-size: .86rem; color: #7a2a1d; }
+.vsm-excl-note:empty { display: none; }
+.vsm-compare { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; margin: 0 0 8px; }
+.vsm-compare h4 { margin: 0 0 8px; font-size: 1.05rem; }
+.vsm-compare table { font-size: .93rem; }
+.vsm-compare td.num, .vsm-compare th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.vsm-compare .good { color: #1f6b0a; font-weight: 700; }
+.vsm-compare .bad { color: #8a2f1d; font-weight: 700; }
+.vsm-compare .th-cur { color: var(--cur-blue); }
+.vsm-compare .th-fut { color: var(--kelly-dark); }
+.vsm-compare .vnote { font-size: .85rem; color: var(--muted); margin: 8px 0 0; }
+.stream-card .time-line .excl-badge { display: inline-block; background: #7a2a1d; color: #fff; font-size: .68rem; font-weight: 700; padding: 1px 6px; border-radius: 999px; letter-spacing: .03em; }
+.live-time.set { font-style: normal; color: var(--ink); font-weight: 650; }
+@media print {
+  .vsm-scroll svg { min-width: 0; }
+  .vsm-map, .vsm-compare { break-inside: avoid; box-shadow: none; }
+}
+
 </style>
 </head>
 <body data-mode="future">
@@ -285,7 +332,7 @@ body.slide-view.view-team .slide-team { display: block; }
       <h1>Checkout loops and graphs: a CD operating model</h1>
       <p class="lede">A future-state operating model for a 50-person functional team that handles checkout for multiple products in the enterprise. Loops are PDSA iterations that build quality in. The graph is the set of contracts with channel stakeholders, so every party who needs a clear outcome has a clear outcome.</p>
       <p class="credit">After Hanako (@hanakoxbt), <em>Loops and Graphs</em>.</p>
-      <p class="note"><strong>Times are left blank on purpose.</strong> Fill in wait and cycle times from the team’s own value stream map. Figures in earlier drafts were illustrative only, not measurements.</p>
+      <p class="note"><strong>Times are left blank on purpose.</strong> Enter lead time (LT) and process time (PT) for each step from the team’s own value stream map, in the timing section under “Value stream” (<a href="#vsm">jump there</a>). The current-state and CD future-state maps draw as you type. Figures in earlier drafts were illustrative only, not measurements.</p>
     </header>
 
     <nav class="toc no-print" aria-label="Contents">
@@ -316,9 +363,9 @@ body.slide-view.view-team .slide-team { display: block; }
 
     <section class="doc-sec" id="stream">
       <h2>Value stream: zoom into any step’s loop</h2>
-      <p class="caption">Each step ends at a locked acceptance-test gate in the future state. Click a step to zoom, or use “Show all loops” (and Print) to see every PDSA cycle and gate. Times: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></p>
+      <p class="caption">Each step ends at a locked acceptance-test gate in the future state. Click a step to zoom, or use “Show all loops” (and Print) to see every PDSA cycle and gate. Enter lead time and process time for each step in the timing section further down (<a href="#vsm">jump there</a>).</p>
       <div class="interactive-zoom">
-        <div class="stream-strip"><button type="button" class="stream-card" data-step="0"><span class="step-num">Step 1</span><strong>Intake and slice</strong><span class="role">Splitter</span><span class="time-line">Time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></span></button><button type="button" class="stream-card" data-step="1"><span class="step-num">Step 2</span><strong>Acceptance test first</strong><span class="role">The check that can fail</span><span class="time-line">Time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></span></button><button type="button" class="stream-card" data-step="2"><span class="step-num">Step 3</span><strong>Build</strong><span class="role">Worker with a loop inside</span><span class="time-line">Time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></span></button><button type="button" class="stream-card" data-step="3"><span class="step-num">Step 4</span><strong>Verify</strong><span class="role">Code nodes</span><span class="time-line">Time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></span></button><button type="button" class="stream-card" data-step="4"><span class="step-num">Step 5</span><strong>Review and merge</strong><span class="role">Gate: the human approves the last step</span><span class="time-line">Time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></span></button><button type="button" class="stream-card" data-step="5"><span class="step-num">Step 6</span><strong>Release</strong><span class="role">Lanes by blast radius</span><span class="time-line">Time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></span></button><button type="button" class="stream-card" data-step="6"><span class="step-num">Step 7</span><strong>Operate and learn</strong><span class="role">Learning edge</span><span class="time-line">Time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></span></button></div>
+        <div class="stream-strip"><button type="button" class="stream-card" data-step="0"><span class="step-num">Step 1</span><strong>Intake and slice</strong><span class="role">Splitter</span><span class="time-line">Time: <span class="blank" title="Enter LT and PT in the timing section below">fill in</span></span></button><button type="button" class="stream-card" data-step="1"><span class="step-num">Step 2</span><strong>Acceptance test first</strong><span class="role">The check that can fail</span><span class="time-line">Time: <span class="blank" title="Enter LT and PT in the timing section below">fill in</span></span></button><button type="button" class="stream-card" data-step="2"><span class="step-num">Step 3</span><strong>Build</strong><span class="role">Worker with a loop inside</span><span class="time-line">Time: <span class="blank" title="Enter LT and PT in the timing section below">fill in</span></span></button><button type="button" class="stream-card" data-step="3"><span class="step-num">Step 4</span><strong>Verify</strong><span class="role">Code nodes</span><span class="time-line">Time: <span class="blank" title="Enter LT and PT in the timing section below">fill in</span></span></button><button type="button" class="stream-card" data-step="4"><span class="step-num">Step 5</span><strong>Review and merge</strong><span class="role">Gate: the human approves the last step</span><span class="time-line">Time: <span class="blank" title="Enter LT and PT in the timing section below">fill in</span></span></button><button type="button" class="stream-card" data-step="5"><span class="step-num">Step 6</span><strong>Release</strong><span class="role">Lanes by blast radius</span><span class="time-line">Time: <span class="blank" title="Enter LT and PT in the timing section below">fill in</span></span></button><button type="button" class="stream-card" data-step="6"><span class="step-num">Step 7</span><strong>Operate and learn</strong><span class="role">Learning edge</span><span class="time-line">Time: <span class="blank" title="Enter LT and PT in the timing section below">fill in</span></span></button></div>
         <p class="edges" id="stream-edges">Correction edge (short): Verify or Review returns one unit to Build · Learning edge (long): Operate and learn sends a constraint back to Intake</p>
         <p class="legend" id="legend"><span><i class="swatch" style="background:var(--human)"></i>Human</span><span><i class="swatch" style="background:var(--copilot)"></i>Copilot</span><span><i class="swatch" style="background:var(--pipeline)"></i>Pipeline</span></p>
         <div class="zoom-grid">
@@ -332,6 +379,37 @@ body.slide-view.view-team .slide-team { display: block; }
           </div>
         </div>
       </div>
+      <div class="vsm-block" id="vsm">
+      <h3 class="vsm-h">Lead time and process time: current state and CD future state</h3>
+      <p class="caption">Enter lead time (LT, start to finish for the step, including waiting) and process time (PT, hands-on working time) for each step. The two maps below always show both states so you can compare them. Wait time is LT minus PT. Values are saved in this browser only.</p>
+      <div class="vsm-tools no-print">
+        <label class="vsm-unit">Unit
+          <select id="vsm-unit"><option value="minutes">minutes</option><option value="hours" selected>hours</option><option value="days">days (24 h)</option></select>
+        </label>
+        <div class="seg" role="group" aria-label="Which state to edit">
+          <button type="button" class="vsm-edit-btn" data-edit="cur" aria-pressed="false">Edit current state</button>
+          <button type="button" class="vsm-edit-btn" data-edit="fut" aria-pressed="true">Edit CD future state</button>
+        </div>
+        <button type="button" class="btn" id="vsm-reset">Reset all values</button>
+      </div>
+      <p class="vsm-hint no-print" id="vsm-hint"></p>
+      <label class="vsm-msg-edit no-print" id="vsm-msg-wrap">Message shown for excluded steps
+        <input type="text" id="vsm-msg" aria-label="Message shown for excluded steps">
+      </label>
+      <div class="vsm-editor no-print" id="vsm-editor"></div>
+
+      <div class="vsm-map vsm-map-cur">
+        <h4>Current state map</h4>
+        <div class="vsm-scroll"><div id="vsm-graph-cur"></div></div>
+        <p class="vsm-excl-note" id="vsm-excl-note"></p>
+      </div>
+      <div class="vsm-map vsm-map-fut">
+        <h4>CD future state map</h4>
+        <div class="vsm-scroll"><div id="vsm-graph-fut"></div></div>
+      </div>
+      <div class="vsm-compare" id="vsm-compare"></div>
+    </div>
+
       <div class="expanded-only" id="all-loops">
         <p class="legend"><span><i class="swatch" style="background:var(--human)"></i>Human</span><span><i class="swatch" style="background:var(--copilot)"></i>Copilot</span><span><i class="swatch" style="background:var(--pipeline)"></i>Pipeline</span> <span style="color:var(--faint)">In current state the loop is a slow, late-study cycle, shown in gray.</span></p>
         
@@ -343,13 +421,13 @@ body.slide-view.view-team .slide-team { display: block; }
   <div class="step-grid">
     <div class="panel">
       <h4>Current state</h4>
-      <p class="time-line">Wait / cycle time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></p>
+      <p class="time-line">Lead time / process time: <span class="blank live-time" data-live="cur" data-step="0" title="Enter LT and PT in the timing section above">fill in</span></p>
       <p>Product lines send large projects into quarterly intake. Work is cut by component (front end, back end, QA), so slices wait on each other.</p>
       <div class="pdsa-mount" data-step="0" data-mode="current"></div>
     </div>
     <div class="panel panel-future">
       <h4>CD future state</h4>
-      <p class="time-line">Target cycle time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></p>
+      <p class="time-line">Target lead time / process time: <span class="blank live-time" data-live="fut" data-step="0" title="Enter LT and PT in the timing section above">fill in</span></p>
       <p>Product owner and squad cut work by outcome and blast radius into thin vertical slices: one issue, one bounded job, one input, one output. Only real dependencies become edges.</p>
       <div class="pdsa-mount" data-step="0" data-mode="future"></div>
       <dl class="props">
@@ -371,13 +449,13 @@ body.slide-view.view-team .slide-team { display: block; }
   <div class="step-grid">
     <div class="panel">
       <h4>Current state</h4>
-      <p class="time-line">Wait / cycle time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></p>
+      <p class="time-line">Lead time / process time: <span class="blank live-time" data-live="cur" data-step="1" title="Enter LT and PT in the timing section above">fill in</span></p>
       <p>QA writes test cases after code is done. Acceptance is a manual regression pass near release, so the check arrives late and is easy to argue with.</p>
       <div class="pdsa-mount" data-step="1" data-mode="current"></div>
     </div>
     <div class="panel panel-future">
       <h4>CD future state</h4>
-      <p class="time-line">Target cycle time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></p>
+      <p class="time-line">Target lead time / process time: <span class="blank live-time" data-live="fut" data-step="1" title="Enter LT and PT in the timing section above">fill in</span></p>
       <p>A human trio (developer, product owner, stakeholder voice) writes the executable acceptance test before any code, Farley style, in the language of the contract. It is locked: the agent can run it, never edit it.</p>
       <div class="pdsa-mount" data-step="1" data-mode="future"></div>
       <dl class="props">
@@ -399,13 +477,13 @@ body.slide-view.view-team .slide-team { display: block; }
   <div class="step-grid">
     <div class="panel">
       <h4>Current state</h4>
-      <p class="time-line">Wait / cycle time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></p>
+      <p class="time-line">Lead time / process time: <span class="blank live-time" data-live="cur" data-step="2" title="Enter LT and PT in the timing section above">fill in</span></p>
       <p>Long-lived feature branches per project. Merges are big and risky, so people batch them, which makes them bigger.</p>
       <div class="pdsa-mount" data-step="2" data-mode="current"></div>
     </div>
     <div class="panel panel-future">
       <h4>CD future state</h4>
-      <p class="time-line">Target cycle time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></p>
+      <p class="time-line">Target lead time / process time: <span class="blank live-time" data-live="fut" data-step="2" title="Enter LT and PT in the timing section above">fill in</span></p>
       <p>The issue is assigned to Copilot coding agent. It works in its own environment, opens a draft pull request on a short-lived branch off trunk, and loops produce, check, correct until green. New behavior ships behind a feature flag.</p>
       <div class="pdsa-mount" data-step="2" data-mode="future"></div>
       <dl class="props">
@@ -427,13 +505,13 @@ body.slide-view.view-team .slide-team { display: block; }
   <div class="step-grid">
     <div class="panel">
       <h4>Current state</h4>
-      <p class="time-line">Wait / cycle time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></p>
+      <p class="time-line">Lead time / process time: <span class="blank live-time" data-live="cur" data-step="3" title="Enter LT and PT in the timing section above">fill in</span></p>
       <p>A nightly build into a shared QA environment, then a manual regression cycle. Failures come back as a batch days later.</p>
       <div class="pdsa-mount" data-step="3" data-mode="current"></div>
     </div>
     <div class="panel panel-future">
       <h4>CD future state</h4>
-      <p class="time-line">Target cycle time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></p>
+      <p class="time-line">Target lead time / process time: <span class="blank live-time" data-live="fut" data-step="3" title="Enter LT and PT in the timing section above">fill in</span></p>
       <p>Every push runs deterministic checks with no model in them: build, unit, consumer-driven contract tests per stakeholder, mutation testing on changed code, CodeQL, dependency and secret scanning, card-data scope check.</p>
       <div class="pdsa-mount" data-step="3" data-mode="future"></div>
       <dl class="props">
@@ -455,13 +533,13 @@ body.slide-view.view-team .slide-team { display: block; }
   <div class="step-grid">
     <div class="panel">
       <h4>Current state</h4>
-      <p class="time-line">Wait / cycle time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></p>
+      <p class="time-line">Lead time / process time: <span class="blank live-time" data-live="cur" data-step="4" title="Enter LT and PT in the timing section above">fill in</span></p>
       <p>Two reviewers read every line, then a weekly change board. Humans sit in the middle of the graph and set its speed.</p>
       <div class="pdsa-mount" data-step="4" data-mode="current"></div>
     </div>
     <div class="panel panel-future">
       <h4>CD future state</h4>
-      <p class="time-line">Target cycle time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></p>
+      <p class="time-line">Target lead time / process time: <span class="blank live-time" data-live="fut" data-step="4" title="Enter LT and PT in the timing section above">fill in</span></p>
       <p>Copilot code review comments first and the agent resolves them. Then one accountable human approves the merge to trunk, reading evidence in order: deterministic results, the agent&#x27;s session trajectory, rollback history of this area, and the model&#x27;s own assessment last.</p>
       <div class="pdsa-mount" data-step="4" data-mode="future"></div>
       <dl class="props">
@@ -483,13 +561,13 @@ body.slide-view.view-team .slide-team { display: block; }
   <div class="step-grid">
     <div class="panel">
       <h4>Current state</h4>
-      <p class="time-line">Wait / cycle time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></p>
+      <p class="time-line">Lead time / process time: <span class="blank live-time" data-live="cur" data-step="5" title="Enter LT and PT in the timing section above">fill in</span></p>
       <p>Monthly release windows, manual deploy steps, all-or-nothing rollouts across every product line at once.</p>
       <div class="pdsa-mount" data-step="5" data-mode="current"></div>
     </div>
     <div class="panel panel-future">
       <h4>CD future state</h4>
-      <p class="time-line">Target cycle time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></p>
+      <p class="time-line">Target lead time / process time: <span class="blank live-time" data-live="fut" data-step="5" title="Enter LT and PT in the timing section above">fill in</span></p>
       <p>Every merge deploys to production dark, behind a flag. Rollout ramps by product line (1, 10, 50, 100 percent) with automatic rollback when an SLO or contract signal breaks.</p>
       <div class="pdsa-mount" data-step="5" data-mode="future"></div>
       <dl class="props">
@@ -511,13 +589,13 @@ body.slide-view.view-team .slide-team { display: block; }
   <div class="step-grid">
     <div class="panel">
       <h4>Current state</h4>
-      <p class="time-line">Wait / cycle time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></p>
+      <p class="time-line">Lead time / process time: <span class="blank live-time" data-live="cur" data-step="6" title="Enter LT and PT in the timing section above">fill in</span></p>
       <p>Incidents are reviewed in a quarterly retro. Learnings go to a wiki page. Next quarter starts from the same place with the same blind spots.</p>
       <div class="pdsa-mount" data-step="6" data-mode="current"></div>
     </div>
     <div class="panel panel-future">
       <h4>CD future state</h4>
-      <p class="time-line">Target cycle time: <span class="blank" title="Fill in from the team's own value stream map">fill in</span></p>
+      <p class="time-line">Target lead time / process time: <span class="blank live-time" data-live="fut" data-step="6" title="Enter LT and PT in the timing section above">fill in</span></p>
       <p>Each accepted result or incident yields a derived constraint. It lands in the slicing brief, in `.github/copilot-instructions.md`, and as a new locked acceptance test, so the next run starts where this one ended.</p>
       <div class="pdsa-mount" data-step="6" data-mode="future"></div>
       <dl class="props">
@@ -1222,6 +1300,359 @@ window.MODEL_DATA = {"steps": [{"name": "Intake and slice", "role": "Splitter", 
   }
 })();
 
+</script>
+<script>
+/* ===== Lead time / process time maps =====
+   EDIT HERE: wording and defaults for the timing maps. */
+(function () {
+  var CONFIG = {
+    // Shown for a step excluded from the current state. Also editable in the page (saved in the browser).
+    EXCLUDED_MESSAGE: "Excluded from current state: this step exists in the future state only.",
+    DEFAULT_UNIT: "hours",
+    STORAGE_KEY: "checkoutCdVsm.v1"
+  };
+  var UNITS = {
+    minutes: { f: 1, label: "min" },
+    hours: { f: 60, label: "hr" },
+    days: { f: 1440, label: "day" }
+  };
+  var CUR = "#1d4e89", CUR_TINT = "#e1ebf7", CUR_TEXT = "#ffffff";
+  var FUT = "#4CBB17", FUT_TINT = "#e6f6dc", FUT_TEXT = "#10300a";
+  var WAIT = "#8b1a1a", INK = "#1c1b18";
+
+  var steps = (window.MODEL_DATA && window.MODEL_DATA.steps) || [];
+  var N = steps.length;
+  if (!N || !document.getElementById("vsm")) return;
+
+  function blank(n, withEx) {
+    var a = [];
+    for (var i = 0; i < n; i++) a.push(withEx ? { lt: null, pt: null, ex: false } : { lt: null, pt: null });
+    return a;
+  }
+  function freshState() {
+    return { unit: CONFIG.DEFAULT_UNIT, msg: null, cur: blank(N, true), fut: blank(N, false) };
+  }
+  var state = freshState();
+  var editing = "fut";
+
+  function load() {
+    try {
+      var raw = window.localStorage.getItem(CONFIG.STORAGE_KEY);
+      if (!raw) return;
+      var s = JSON.parse(raw);
+      if (s && UNITS[s.unit]) state.unit = s.unit;
+      if (s && typeof s.msg === "string") state.msg = s.msg;
+      ["cur", "fut"].forEach(function (k) {
+        if (s && Array.isArray(s[k])) {
+          for (var i = 0; i < N && i < s[k].length; i++) {
+            var v = s[k][i] || {};
+            state[k][i].lt = num(v.lt);
+            state[k][i].pt = num(v.pt);
+            if (k === "cur") state[k][i].ex = !!v.ex;
+          }
+        }
+      });
+    } catch (e) { /* storage unavailable: run without saving */ }
+  }
+  function save() {
+    try { window.localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+  function num(x) { return (typeof x === "number" && isFinite(x) && x >= 0) ? x : null; }
+  function message() { return (state.msg !== null && state.msg !== "") ? state.msg : CONFIG.EXCLUDED_MESSAGE; }
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function trim(n) { return String(Math.round(n * 100) / 100); }
+  function fmt(mins) {
+    if (mins === null || mins === undefined || !isFinite(mins)) return "\u2013";
+    var u = UNITS[state.unit];
+    var v = mins / u.f;
+    var t = trim(v);
+    var lab = u.label;
+    if (state.unit === "days" && Math.abs(v - 1) > 1e-9) lab = "days";
+    return t + " " + lab;
+  }
+  function fmtPct(x) { return (x === null || !isFinite(x)) ? "\u2013" : trim(x * 100) + "%"; }
+
+  /* Rows in play for a state: current drops excluded steps. */
+  function rows(which) {
+    var out = [];
+    for (var i = 0; i < N; i++) {
+      var r = state[which][i];
+      if (which === "cur" && r.ex) continue;
+      out.push({ i: i, name: steps[i].name, lt: r.lt, pt: r.pt });
+    }
+    return out;
+  }
+  function anyValue(list) {
+    return list.some(function (r) { return r.lt !== null || r.pt !== null; });
+  }
+  function totals(list) {
+    var lt = 0, pt = 0, wait = 0, has = anyValue(list);
+    list.forEach(function (r) {
+      var l = r.lt || 0, p = r.pt || 0;
+      lt += l; pt += p; wait += Math.max(0, l - p);
+    });
+    return { has: has, lt: lt, pt: pt, wait: wait, fe: (has && lt > 0) ? pt / lt : null };
+  }
+
+  /* ---- SVG map, after the classic VSM timeline: step boxes above, raised bumps for process time,
+        dark red line for waiting, summary box at the right. ---- */
+  function wrapName(name) {
+    var words = String(name).split(/\s+/), lines = [], cur = "";
+    words.forEach(function (w) {
+      if ((cur + " " + w).trim().length > 15 && cur) { lines.push(cur); cur = w; }
+      else cur = (cur + " " + w).trim();
+    });
+    if (cur) lines.push(cur);
+    return lines.slice(0, 3);
+  }
+  function mapSvg(list, color, tint, headText, label) {
+    var n = list.length;
+    var W = 1100, padL = 28, sumW = 196, sumX = W - sumW - 8;
+    var avail = sumX - 34 - padL;
+    var colW = Math.min(150, avail / n);
+    var base = 214, bumpTop = 158, headY = 16, headH = 78;
+    var t = totals(list);
+    var s = '<svg class="vsm-svg" viewBox="0 0 ' + W + ' 270" role="img" aria-label="' + esc(label) + ' value stream timeline">';
+    // start band and arrow
+    s += '<rect x="2" y="' + (headY + 20) + '" width="14" height="' + (base - headY - 20) + '" fill="' + tint + '"/>';
+    s += '<path d="M4 ' + (base - 24) + ' h8 m-3 -3 l3 3 l-3 3" stroke="' + color + '" stroke-width="2" fill="none"/>';
+    var x = padL;
+    list.forEach(function (r) {
+      var l = r.lt, p = r.pt;
+      var waitW = colW * 0.34, bw = colW * 0.60, gap = colW - waitW - bw;
+      var hx = x + 2, hw = colW - 8;
+      var lines = wrapName(r.name);
+      // header box: name on colour, LT on white
+      s += '<g>';
+      s += '<rect x="' + hx + '" y="' + headY + '" width="' + hw + '" height="' + headH + '" rx="3" fill="#fff" stroke="#222" stroke-width="1.2"/>';
+      s += '<rect x="' + hx + '" y="' + headY + '" width="' + hw + '" height="52" rx="3" fill="' + color + '"/>';
+      s += '<rect x="' + hx + '" y="' + (headY + 40) + '" width="' + hw + '" height="12" fill="' + color + '"/>';
+      var ty = headY + 22 - (lines.length - 1) * 6;
+      lines.forEach(function (ln, k) {
+        s += '<text x="' + (hx + hw / 2) + '" y="' + (ty + k * 13) + '" text-anchor="middle" font-size="12" font-weight="700" fill="' + headText + '">' + esc(ln) + '</text>';
+      });
+      s += '<text x="' + (hx + hw / 2) + '" y="' + (headY + 70) + '" text-anchor="middle" font-size="12.5" fill="' + INK + '">LT: ' + esc(fmt(l)) + '</text>';
+      s += '</g>';
+      // wait segment (red) then bump
+      var wx0 = x, wx1 = x + waitW, bx0 = wx1, bx1 = wx1 + bw;
+      var wait = (l === null && p === null) ? null : Math.max(0, (l || 0) - (p || 0));
+      s += '<line x1="' + wx0 + '" y1="' + base + '" x2="' + wx1 + '" y2="' + base + '" stroke="' + WAIT + '" stroke-width="4"/>';
+      s += '<text x="' + ((wx0 + wx1) / 2) + '" y="' + (base + 18) + '" text-anchor="middle" font-size="11" fill="' + WAIT + '">wait ' + esc(fmt(wait)) + '</text>';
+      s += '<rect x="' + bx0 + '" y="' + bumpTop + '" width="' + bw + '" height="' + (base - bumpTop) + '" fill="' + tint + '"/>';
+      s += '<path d="M' + bx0 + ' ' + base + ' V' + (bumpTop + 8) + ' Q' + bx0 + ' ' + bumpTop + ' ' + (bx0 + 8) + ' ' + bumpTop + ' H' + (bx1 - 8) + ' Q' + bx1 + ' ' + bumpTop + ' ' + bx1 + ' ' + (bumpTop + 8) + ' V' + base + '" fill="none" stroke="#222" stroke-width="1.6"/>';
+      s += '<path d="M' + (bx0 + 0.5) + ' ' + (bumpTop + 9) + ' Q' + bx0 + ' ' + bumpTop + ' ' + (bx0 + 8) + ' ' + bumpTop + ' H' + (bx1 - 8) + ' Q' + bx1 + ' ' + bumpTop + ' ' + (bx1 - 0.5) + ' ' + (bumpTop + 9) + '" fill="none" stroke="' + color + '" stroke-width="4"/>';
+      s += '<text x="' + ((bx0 + bx1) / 2) + '" y="' + (bumpTop + 28) + '" text-anchor="middle" font-size="12" font-weight="700" fill="' + INK + '">PT: ' + esc(fmt(p)) + '</text>';
+      // trailing red line to the next column
+      if (gap > 0) s += '<line x1="' + bx1 + '" y1="' + base + '" x2="' + (x + colW) + '" y2="' + base + '" stroke="' + WAIT + '" stroke-width="4"/>';
+      x += colW;
+    });
+    // arrow to summary
+    s += '<path d="M' + (x + 2) + ' ' + base + ' H' + (sumX - 4) + ' m-7 -5 l7 5 l-7 5" stroke="' + INK + '" stroke-width="2" fill="none"/>';
+    // summary box
+    var sy = 60, rowsT = [
+      ["Lead Time", t.has ? fmt(t.lt) : "\u2013"],
+      ["Process Time", t.has ? fmt(t.pt) : "\u2013"],
+      ["Wait Time", t.has ? fmt(t.wait) : "\u2013"],
+      ["Flow efficiency", fmtPct(t.fe)]
+    ];
+    s += '<rect x="' + sumX + '" y="' + sy + '" width="' + sumW + '" height="' + (28 + rowsT.length * 20 + 8) + '" fill="#fff" stroke="#222" stroke-width="1.2"/>';
+    s += '<rect x="' + sumX + '" y="' + sy + '" width="' + sumW + '" height="22" fill="#222"/>';
+    s += '<text x="' + (sumX + sumW / 2) + '" y="' + (sy + 15) + '" text-anchor="middle" font-size="12.5" font-weight="700" fill="#fff">VSM Summary</text>';
+    rowsT.forEach(function (rw, k) {
+      var yy = sy + 42 + k * 20;
+      s += '<text x="' + (sumX + 8) + '" y="' + yy + '" font-size="12" font-weight="700" fill="' + INK + '">' + esc(rw[0]) + '</text>';
+      s += '<text x="' + (sumX + sumW - 8) + '" y="' + yy + '" text-anchor="end" font-size="12" fill="' + INK + '">' + esc(rw[1]) + '</text>';
+    });
+    s += '</svg>';
+    return s;
+  }
+
+  function el(id) { return document.getElementById(id); }
+
+  function renderGraphs() {
+    var cl = rows("cur"), fl = rows("fut");
+    var cg = el("vsm-graph-cur"), fg = el("vsm-graph-fut");
+    cg.innerHTML = cl.length === 0
+      ? '<p class="vsm-empty">Every step is excluded from the current state. Turn Exclude off on at least one step to draw this map.</p>'
+      : (anyValue(cl) ? mapSvg(cl, CUR, CUR_TINT, CUR_TEXT, "Current state")
+        : '<p class="vsm-empty">Enter LT and PT for the current-state steps (choose \u201cEdit current state\u201d above) and the map draws here.</p>');
+    fg.innerHTML = anyValue(fl)
+      ? mapSvg(fl, FUT, FUT_TINT, FUT_TEXT, "CD future state")
+      : '<p class="vsm-empty">Enter LT and PT for the future-state steps (choose \u201cEdit CD future state\u201d above) and the map draws here.</p>';
+    var ex = [];
+    for (var i = 0; i < N; i++) if (state.cur[i].ex) ex.push("Step " + (i + 1) + " " + steps[i].name);
+    el("vsm-excl-note").innerHTML = ex.length ? "<strong>" + esc(ex.join("; ")) + ":</strong> " + esc(message()) : "";
+    renderCompare(totals(cl), totals(fl), cl.length, fl.length);
+    renderLive();
+  }
+
+  function delta(a, b, kind) {
+    // b (future) minus a (current)
+    if (a === null || b === null) return { txt: "\u2013", cls: "" };
+    var d = b - a;
+    if (kind === "pct") {
+      var pp = Math.round(d * 1000) / 10;
+      return { txt: (pp > 0 ? "+" : "") + trim(pp) + " pts", cls: pp > 0 ? "good" : (pp < 0 ? "bad" : "") };
+    }
+    var cls = "";
+    if (kind === "lower" && Math.abs(d) > 1e-9) cls = d < 0 ? "good" : "bad";
+    var sign = d > 0 ? "+" : (d < 0 ? "\u2212" : "");
+    var pct = a > 0 ? " (" + sign + trim(Math.abs(d) / a * 100) + "%)" : "";
+    return { txt: sign + fmt(Math.abs(d)) + pct, cls: cls };
+  }
+  function renderCompare(c, f, cn, fn) {
+    var rowsH = [
+      ["Lead time (LT)", c.has ? c.lt : null, f.has ? f.lt : null, "lower"],
+      ["Process time (PT)", c.has ? c.pt : null, f.has ? f.pt : null, "neutral"],
+      ["Wait time (LT \u2212 PT)", c.has ? c.wait : null, f.has ? f.wait : null, "lower"]
+    ].map(function (r) {
+      var d = delta(r[1], r[2], r[3]);
+      return "<tr><td>" + r[0] + '</td><td class="num">' + esc(fmt(r[1])) + '</td><td class="num">' + esc(fmt(r[2])) + '</td><td class="num ' + d.cls + '">' + esc(d.txt) + "</td></tr>";
+    }).join("");
+    var d2 = delta(c.fe, f.fe, "pct");
+    rowsH += "<tr><td>Flow efficiency (PT \u00f7 LT)</td><td class=\"num\">" + fmtPct(c.fe) + '</td><td class="num">' + fmtPct(f.fe) + '</td><td class="num ' + d2.cls + '">' + esc(d2.txt) + "</td></tr>";
+    var excluded = N - cn;
+    el("vsm-compare").innerHTML =
+      "<h4>Comparison: current state vs CD future state</h4>" +
+      '<div class="table-wrap"><table><thead><tr><th>Measure</th><th class="num th-cur">Current state</th><th class="num th-fut">CD future state</th><th class="num">Change (future \u2212 current)</th></tr></thead><tbody>' + rowsH + "</tbody></table></div>" +
+      '<p class="vnote">Current state counts ' + cn + " of " + N + " steps" + (excluded ? " (" + excluded + " excluded)" : "") + "; future state counts " + fn + " of " + N + " steps. Blank fields count as zero. Where a step\u2019s PT is larger than its LT, its wait is counted as zero. Green marks a favourable change (shorter lead time and wait, higher flow efficiency).</p>";
+  }
+
+  /* live read-outs elsewhere on the page (stream cards, step panels) */
+  function liveText(which, i) {
+    var r = state[which][i];
+    if (which === "cur" && r.ex) return null;
+    if (r.lt === null && r.pt === null) return "";
+    return "LT " + fmt(r.lt) + " \u00b7 PT " + fmt(r.pt);
+  }
+  function renderLive() {
+    var mode = document.body.getAttribute("data-mode") === "current" ? "cur" : "fut";
+    document.querySelectorAll(".stream-card").forEach(function (b) {
+      var i = Number(b.getAttribute("data-step")), t = b.querySelector(".time-line");
+      if (!t) return;
+      var txt = liveText(mode, i);
+      if (txt === null) t.innerHTML = '<span class="excl-badge">Excluded</span>';
+      else t.innerHTML = txt ? esc(txt) : 'Time: <span class="blank" title="Enter LT and PT in the timing section below">fill in</span>';
+    });
+    document.querySelectorAll(".live-time").forEach(function (sp) {
+      var which = sp.getAttribute("data-live"), i = Number(sp.getAttribute("data-step"));
+      var txt = liveText(which, i);
+      if (txt === null) { sp.textContent = "excluded"; sp.classList.remove("set"); }
+      else if (txt) { sp.textContent = txt; sp.classList.add("set"); }
+      else { sp.textContent = "fill in"; sp.classList.remove("set"); }
+    });
+    var zs = document.getElementById("zoom-side");
+    if (zs) {
+      var sel = -1;
+      document.querySelectorAll(".stream-card").forEach(function (b) { if (b.getAttribute("aria-pressed") === "true") sel = Number(b.getAttribute("data-step")); });
+      var holders = zs.querySelectorAll("dd .blank");
+      if (sel >= 0 && holders.length) {
+        var txt2 = liveText(mode, sel);
+        holders[holders.length - 1].textContent = txt2 === null ? "excluded" : (txt2 || "fill in");
+      }
+    }
+  }
+
+  /* ---- editor ---- */
+  function unitInputVal(mins) { return mins === null ? "" : trim(mins / UNITS[state.unit].f); }
+  function renderEditor() {
+    var which = editing, host = el("vsm-editor");
+    host.className = "vsm-editor no-print " + which;
+    var u = UNITS[state.unit].label === "day" ? "days" : (state.unit === "hours" ? "hours" : "minutes");
+    var html = "";
+    for (var i = 0; i < N; i++) {
+      var r = state[which][i];
+      var ex = which === "cur" && r.ex;
+      html += '<div class="vsm-card' + (ex ? " excluded" : "") + '" data-i="' + i + '">' +
+        '<span class="vn">Step ' + (i + 1) + "</span><strong>" + esc(steps[i].name) + "</strong>";
+      if (ex) {
+        html += '<p class="vexmsg">' + esc(message()) + "</p>";
+      } else {
+        html += '<label>LT<input type="number" min="0" step="any" inputmode="decimal" data-f="lt" value="' + unitInputVal(r.lt) + '" aria-label="Lead time for step ' + (i + 1) + ' in ' + u + '"></label>' +
+          '<label>PT<input type="number" min="0" step="any" inputmode="decimal" data-f="pt" value="' + unitInputVal(r.pt) + '" aria-label="Process time for step ' + (i + 1) + ' in ' + u + '"></label>' +
+          '<p class="vwarn" data-warn></p>';
+      }
+      if (which === "cur") {
+        html += '<button type="button" class="vsm-excl-btn" data-ex aria-pressed="' + (r.ex ? "true" : "false") + '" title="Take this step out of the current-state map and totals (use for steps that only exist in the future state)">' + (r.ex ? "Excluded \u2013 include it" : "Exclude") + "</button>";
+      }
+      html += "</div>";
+    }
+    host.innerHTML = html;
+    for (var k = 0; k < N; k++) updateWarn(k);
+    document.querySelectorAll(".vsm-edit-btn").forEach(function (b) {
+      b.setAttribute("aria-pressed", b.getAttribute("data-edit") === which ? "true" : "false");
+    });
+    el("vsm-hint").textContent = "Enter times in " + u + ". " + (which === "cur"
+      ? "Use Exclude on a step that does not exist today (it only exists in the future state) to remove it from the current-state map and totals."
+      : "Future-state step content is unchanged; these fields hold your target LT and PT.");
+    el("vsm-msg-wrap").style.display = which === "cur" ? "" : "none";
+  }
+  function updateWarn(i) {
+    var card = el("vsm-editor").querySelector('.vsm-card[data-i="' + i + '"]');
+    if (!card) return;
+    var w = card.querySelector("[data-warn]");
+    if (!w) return;
+    var r = state[editing][i];
+    w.textContent = (r.lt !== null && r.pt !== null && r.pt > r.lt) ? "PT is larger than LT, wait counted as 0" : "";
+  }
+
+  function init() {
+    load();
+    el("vsm-unit").value = state.unit;
+    el("vsm-msg").value = state.msg === null ? CONFIG.EXCLUDED_MESSAGE : state.msg;
+    el("vsm-unit").addEventListener("change", function (e) {
+      state.unit = e.target.value; save(); renderEditor(); renderGraphs();
+    });
+    el("vsm-msg").addEventListener("input", function (e) {
+      state.msg = e.target.value; save(); renderGraphs();
+    });
+    document.querySelectorAll(".vsm-edit-btn").forEach(function (b) {
+      b.addEventListener("click", function () { editing = b.getAttribute("data-edit"); renderEditor(); });
+    });
+    el("vsm-editor").addEventListener("input", function (e) {
+      var inp = e.target;
+      if (!inp.matches || !inp.matches("input[data-f]")) return;
+      var card = inp.closest(".vsm-card"), i = Number(card.getAttribute("data-i"));
+      var v = inp.value === "" ? null : parseFloat(inp.value);
+      v = (v === null || !isFinite(v) || v < 0) ? null : v * UNITS[state.unit].f;
+      state[editing][i][inp.getAttribute("data-f")] = v;
+      save(); updateWarn(i); renderGraphs();
+    });
+    el("vsm-editor").addEventListener("click", function (e) {
+      var b = e.target.closest ? e.target.closest("[data-ex]") : null;
+      if (!b) return;
+      var i = Number(b.closest(".vsm-card").getAttribute("data-i"));
+      state.cur[i].ex = !state.cur[i].ex;
+      save(); renderEditor(); renderGraphs();
+    });
+    el("vsm-reset").addEventListener("click", function () {
+      if (!window.confirm("Clear all lead time, process time and exclude settings?")) return;
+      state = freshState();
+      try { window.localStorage.removeItem(CONFIG.STORAGE_KEY); } catch (e) {}
+      el("vsm-unit").value = state.unit;
+      el("vsm-msg").value = CONFIG.EXCLUDED_MESSAGE;
+      renderEditor(); renderGraphs();
+    });
+    // follow the Current / Future toggle in the top bar
+    function followMode() {
+      editing = document.body.getAttribute("data-mode") === "current" ? "cur" : "fut";
+      renderEditor(); renderLive();
+    }
+    new MutationObserver(followMode).observe(document.body, { attributes: true, attributeFilter: ["data-mode"] });
+    // keep stream-card read-outs in sync when a card is clicked
+    document.querySelectorAll(".stream-card").forEach(function (b) {
+      b.addEventListener("click", function () { setTimeout(renderLive, 0); });
+    });
+    editing = document.body.getAttribute("data-mode") === "current" ? "cur" : "fut";
+    renderEditor(); renderGraphs();
+  }
+  init();
+})();
 </script>
 </body>
 </html>
